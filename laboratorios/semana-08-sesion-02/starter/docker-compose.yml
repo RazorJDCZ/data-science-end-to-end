@@ -1,6 +1,27 @@
 services:
   python-app:
-    build: .
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
     container_name: semana08
+    working_dir: /app/session
     volumes:
-      - ./data-contenedor:/app/starter/figuras
+      - ..:/app/session
+
+  ejercicio2:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/plantilla-ejercicio2
+    volumes:
+      - ..:/app/session
+    command: ["python", "explorar_relaciones.py"]
+
+  proyecto:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/plantilla-eda
+    volumes:
+      - ..:/app/session
+    command: ["python", "explorar_proyecto.py"]

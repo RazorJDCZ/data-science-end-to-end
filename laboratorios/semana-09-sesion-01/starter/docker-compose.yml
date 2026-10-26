@@ -1,0 +1,45 @@
+services:
+  python-app:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    container_name: semana09
+    working_dir: /app/session
+    volumes:
+      - ..:/app/session:ro
+
+  datos-emergencias:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/laboratorios
+    volumes:
+      - ../..:/app/laboratorios
+    command: ["python", "unificar_emergencias_raw.py"]
+
+  datos-proyecto:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/laboratorios
+    volumes:
+      - ../..:/app/laboratorios
+    command: ["python", "preparar_obt_emergencias.py"]
+
+  proyecto-semana08:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/laboratorios/semana-08-sesion-02/plantilla-eda
+    volumes:
+      - ../..:/app/laboratorios
+    command: ["python", "explorar_proyecto.py"]
+
+  proyecto-semana09:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/laboratorios/semana-09-sesion-01/plantilla-features
+    volumes:
+      - ../..:/app/laboratorios
+    command: ["python", "features_proyecto.py"]

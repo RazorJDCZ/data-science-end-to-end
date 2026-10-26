@@ -1,0 +1,7 @@
+data/
+starter/data-contenedor/
+starter/figuras/
+plantilla-eda/figuras/
+plantilla-ejercicio2/figuras/
+**/__pycache__/
+*.pyc

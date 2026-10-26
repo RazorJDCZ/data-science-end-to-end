@@ -1,0 +1,5 @@
+data/ecu911_emergencias_raw.csv
+data/ecu911_emergencias_raw.csv.partial
+data/obt_emergencias_canton_dia.csv
+data/obt_emergencias_canton_dia.csv.partial
+data/duckdb_ecu911_*/

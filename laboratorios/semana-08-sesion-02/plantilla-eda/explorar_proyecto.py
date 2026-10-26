@@ -1,15 +1,25 @@
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-os.makedirs("figuras", exist_ok=True)
+DIRECTORIO = Path(__file__).resolve().parent
+FIGURAS = DIRECTORIO / "figuras"
+FIGURAS.mkdir(exist_ok=True)
 
-# OBT del PSet 2 (ECU 911), exportada desde Snowflake: OBT.OBT_EMERGENCIAS_CANTON_DIA.
+# OBT local construida desde data/ecu911_emergencias_raw.csv.
+RUTA_PREDETERMINADA = DIRECTORIO.parents[0] / "data" / "obt_emergencias_canton_dia.csv"
+RUTA_DATOS = Path(os.environ.get("OBT_CSV", RUTA_PREDETERMINADA))
+if not RUTA_DATOS.exists():
+    raise FileNotFoundError(
+        f"No se encontro {RUTA_DATOS}. Ejecuta primero el servicio datos-proyecto."
+    )
+
 # Los codigos DPA se leen como texto para no perder el cero inicial (0101 = Cuenca).
 datos = pd.read_csv(
-    os.environ.get("OBT_CSV", "obt_emergencias_canton_dia.csv"),
+    RUTA_DATOS,
     dtype={"cod_canton": str, "cod_provincia": str},
     parse_dates=["fecha"],
 )
@@ -28,7 +38,10 @@ print(datos.describe().round(2))
 plt.figure()
 plt.hist(datos[OBJETIVO].dropna(), bins=40)
 plt.title(OBJETIVO)
-plt.savefig("figuras/distribucion_objetivo.png")
+plt.xlabel("Emergencias en t+3")
+plt.ylabel("Numero de observaciones")
+plt.tight_layout()
+plt.savefig(FIGURAS / "distribucion_objetivo.png")
 plt.close()
 
 # Paso 3: atipicos de la variable objetivo con la regla del IQR.
@@ -54,7 +67,7 @@ ejes[1].scatter(quito["lag_4d"], quito[OBJETIVO], s=4)
 ejes[1].set_title("Quito: emergencias en t-4 vs t+3")
 ejes[1].set_xlabel("lag_4d (mismo dia de la semana que t+3)")
 fig.tight_layout()
-fig.savefig("figuras/quito_relacion_objetivo.png")
+fig.savefig(FIGURAS / "quito_relacion_objetivo.png")
 plt.close(fig)
 
 # Paso 5: consultas que confirman los hallazgos.
@@ -64,7 +77,8 @@ print("\n--- Hallazgo 1: escala entre cantones ---")
 print("Cantones distintos entre los atipicos:", fuera["canton"].nunique())
 print(fuera["canton"].value_counts().head(5))
 total_canton = datos.groupby("canton")["n_emergencias"].sum().sort_values(ascending=False)
-print("Proporcion de Quito + Guayaquil:", round(total_canton.head(2).sum() / total_canton.sum(), 3))
+quito_guayaquil = total_canton.reindex(["QUITO", "GUAYAQUIL"]).sum()
+print("Proporcion de Quito + Guayaquil:", round(quito_guayaquil / total_canton.sum(), 3))
 print("Cantones con mediana diaria <= 2:", (datos.groupby("canton")["n_emergencias"].median() <= 2).sum())
 print("Correlacion global n_emergencias vs objetivo:",
       round(datos["n_emergencias"].corr(datos[OBJETIVO]), 3))

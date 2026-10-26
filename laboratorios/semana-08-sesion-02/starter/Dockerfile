@@ -1,12 +1,15 @@
 
 FROM python:3.12-slim
 
-WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-COPY requirements.txt .
+WORKDIR /app/session
 
-RUN pip install -r requirements.txt
+COPY starter/requirements.txt /app/requirements.txt
 
-COPY . ./starter
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-CMD ["python3", "starter/EDA.py"]
+COPY . /app/session
+
+CMD ["python", "starter/EDA.py"]
