@@ -16,78 +16,95 @@ python3 -c "import numpy; print(numpy.__version__)"
 
 Ten a mano tus 3 hallazgos de la exploración de la Semana 8, Sesión 2: las features de hoy salen de ahí.
 
+### Datos locales del proyecto ECU 911
+
+El CSV crudo está en `data/ecu911_emergencias_raw.csv`. Para descargar nuevamente los
+63 meses y después construir la OBT local, ejecuta desde `starter`:
+
+```powershell
+docker compose run --rm --build datos-emergencias
+docker compose run --rm --build datos-proyecto
+```
+
+La OBT queda en `data/obt_emergencias_canton_dia.csv` y comparte el mismo archivo
+físico con la Semana 8. Los CSV grandes están excluidos de Git.
+
 ## Antes de empezar
 
 A partir de la lectura previa:
 
 **Según el artículo, ¿qué diferencia a una feature que tiene sentido de negocio de una que solo mejora una métrica?**
 
-Una feature con sentido de negocio representa algo real del problema, se puede explicar y está disponible en el momento de hacer la predicción. No basta con que suba una métrica. Una columna puede mejorar el resultado por casualidad, porque copia información del futuro o porque aprovecha un patrón que después cambia. Por eso primero trataría de justificar la feature con lo que conozco del proceso y luego comprobaría si ayuda al modelo.
+Una feature con sentido de negocio representa algo real del problema, se puede explicar y está disponible en el momento de predecir. Una columna que solo sube una métrica puede estar aprovechando azar, información futura o un patrón que no se mantendrá en producción.
 
 **Elige uno de los ejemplos del artículo: ¿qué conocimiento del negocio traduce a una columna, y cómo?**
 
-Me quedo con la idea de transformar una fecha cruda en una medida que el modelo pueda relacionar con el problema, por ejemplo tiempo transcurrido o antigüedad. El conocimiento de negocio es que normalmente importa cuánto tiempo ha pasado y no el número de la fecha. En este ejercicio apliqué la misma idea al separar la fecha del viaje en hora, día de la semana, fin de semana y hora pico.
+Me quedo con transformar una fecha cruda en información que el modelo pueda relacionar con el problema, como hora, día semanal, fin de semana o antigüedad. En el ejercicio separé la fecha del viaje y codifiqué la hora como un ciclo.
 
 ## Pregunta de apertura
 
 La exploración encontró dos patrones que no existen como columnas: la tarifa fija entre JFK y Manhattan, y viajes que cuestan más por kilómetro a ciertas horas. El modelo solo ve columnas. ¿Cómo le das esa información?
 
-Crearía `es_tarifa_fija`, que vale 1 cuando el viaje conecta JFK con una zona de Manhattan, y `es_hora_pico`, que vale 1 en las franjas con más tráfico. También conservaría la hora con una codificación cíclica (`hora_sin` y `hora_cos`) para que las 23:00 y las 00:00 queden cerca. De esta forma el modelo recibe los patrones como números en lugar de tener que descubrirlos solamente a partir de las columnas originales.
+Crearía `es_tarifa_fija`, que vale 1 cuando el viaje conecta JFK con Manhattan, y `es_hora_pico`, que vale 1 en las franjas de tráfico de días laborables. También usaría `hora_sin` y `hora_cos` para que las 23:00 y las 00:00 queden cerca.
 
 ## Ejercicio 1: features de fecha y hora
 
-Enunciado: [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv), el mismo dataset de la sesión pasada, sin los errores confirmados. A partir de `fecha_hora_inicio`, construir hora, día de la semana, fin de semana, hora pico y la hora como ciclo, y comprobar si la hora pico aporta algo a la tarifa.
+Archivo: [`starter/ejercicio1_features_tiempo.py`](./starter/ejercicio1_features_tiempo.py), sobre [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv), el mismo dataset de la sesión pasada. El script quita los errores confirmados y resuelve los 4 `TODO`: hora, día de la semana, fin de semana, hora pico y la hora como ciclo.
 
-**Respuesta 1, antes de ver la solución:** si dejas la hora como un número del 0 al 23, ¿qué tan lejos queda la hora 23 de la hora 0 para un modelo que mide distancias entre números? ¿Y en el reloj?
+```
+cd laboratorios/semana-09-sesion-01/starter
+python3 ejercicio1_features_tiempo.py
+```
 
-Como números quedan a una distancia de 23, pero en el reloj solo están separadas por una hora. Por eso una variable numérica normal representa mal el ciclo diario. Con seno y coseno, ambas horas quedan cerca en el círculo.
+**Respuesta 1 (TODO 4), antes de ver la solución:** si dejas la hora como un número del 0 al 23, ¿qué tan lejos queda la hora 23 de la hora 0 para un modelo que mide distancias entre números? ¿Y en el reloj?
 
-**Respuesta 2:** la duración del viaje no existe al pedir el taxi, pero la hora sí. ¿Qué parte de lo que la duración le diría al modelo puede traer `es_hora_pico`?
+Como números, 23 y 0 están a una distancia de 23; en el reloj están separados por una hora. Con seno y coseno su distancia es 0,26, la misma que entre 11 y 12.
 
-`es_hora_pico` puede traer una señal indirecta de congestión. En ciertas horas es razonable esperar más tráfico y, por lo tanto, viajes más lentos o costosos. No reemplaza la duración real, pero aporta información disponible antes de que el viaje comience y evita usar una variable del futuro.
+**Respuesta 2 (TODO 3):** sin el TODO 3, el Paso 4 muestra un solo grupo. Con la hora pico construida, ¿esperas que la tarifa por kilómetro sea más alta o más baja en hora pico? ¿Por qué, si la tarifa depende de la distancia y de la duración?
 
-**La formulación completa, tal como la resuelvo yo:**
+Espero una tarifa por kilómetro más alta en hora pico, porque recorrer la misma distancia puede tomar más tiempo por la congestión. La salida lo confirma: la mediana sube de 3,22 USD/km fuera de hora pico a 3,52 USD/km en hora pico.
 
-La solución está en [`starter/mi_primer_feature_eng.py`](./starter/mi_primer_feature_eng.py). Primero quité solamente los errores confirmados: 15 tarifas de 999,99 y 10 duraciones negativas. Quedaron 2.975 de los 3.000 viajes. Después creé `hora`, `dia_semana`, `es_fin_semana`, `es_hora_pico`, `hora_sin` y `hora_cos`.
+**Respuesta 3:** la duración del viaje no existe al pedir el taxi, pero la hora sí. ¿Qué parte de lo que la duración le diría al modelo puede traer `es_hora_pico`?
 
-Definí hora pico como 07:00–09:59 y 16:00–19:59. El resultado fue:
+`es_hora_pico` aporta una señal indirecta de congestión. No reemplaza la duración real, pero representa parte de su efecto usando información que ya existe antes de iniciar el viaje y evita fuga de información.
 
-| Hora pico | Viajes | Tarifa promedio | Duración promedio |
-|---:|---:|---:|---:|
-| 0 | 1.760 | 25,92 | 22,71 min |
-| 1 | 1.215 | 27,39 | 27,94 min |
+**Lo que confirmó la salida, TODO por TODO:**
 
-La diferencia muestra que la hora pico sí aporta una señal: los viajes duran aproximadamente 5,23 minutos más y la tarifa promedio aumenta 1,47. Esto no demuestra por sí solo que la hora sea la causa, porque la ruta y la distancia también influyen, pero sí justifica probar la feature en el modelo.
+La tarifa mediana por kilómetro es 3,22 fuera de hora pico y 3,52 en hora pico. Como números, 23 y 0 están a distancia 23, mientras 11 y 12 están a distancia 1; con la codificación cíclica ambos pares quedan a distancia 0,26.
 
 ## Durante el ConcepTest
 
 **Tu voto, antes de discutir en pareja** (A, B, C o D):
 
-No puedo escoger A, B, C o D porque en este README no aparece el enunciado del ConcepTest ni sus opciones.
+No puedo escoger A, B, C o D porque el repositorio no incluye el enunciado del ConcepTest ni sus opciones.
 
 **Tu razonamiento:**
 
-Para votar necesitaría conocer la afirmación y qué significa cada opción. Elegir una letra sin esa información sería inventar una respuesta y no demostraría que entendí el tema.
+Necesitaría conocer la afirmación y qué representa cada opción. Elegir una letra sin esa información sería inventar una respuesta.
 
 **Después de discutir en pareja, ¿cambiaste de voto? ¿Por qué?**
 
-No aplica todavía. Lo completaría durante la clase cuando se presente el ConcepTest y anotaría qué argumento hizo que mantuviera o cambiara mi respuesta.
+No aplica todavía. Lo completaría durante la clase y anotaría qué argumento hizo que mantuviera o cambiara mi respuesta.
 
 ## Ejercicio 2: zona, codificación y disponibilidad
 
-La solución en [`plantilla-ejercicio2/features_de_zona.py`](./plantilla-ejercicio2/features_de_zona.py) completa la tarifa fija, las dos codificaciones de zona y la revisión de disponibilidad de las variables.
+Archivo: [`starter/ejercicio2_features_zona.py`](./starter/ejercicio2_features_zona.py), sobre el mismo `viajes_taxi.csv`. Los 4 `TODO` están resueltos y las cuatro comprobaciones finales muestran `OK`.
+
+```
+python3 ejercicio2_features_zona.py
+```
 
 **Respuesta 1:** ¿cuántos viajes tienen `es_tarifa_fija` en 1, y qué tarifa mínima y máxima tienen? ¿Qué te dice eso sobre lo que un modelo lineal puede aprender con esta columna?
 
-Hay 300 viajes con `es_tarifa_fija = 1`. La tarifa mínima y la máxima son 70 USD. Esta columna permite que un modelo lineal aprenda un ajuste específico para esas rutas, en vez de intentar explicar los 70 USD solamente con la distancia. Como todos los casos marcados tienen la misma tarifa, es una señal bastante directa.
+Hay 300 viajes con `es_tarifa_fija = 1`; la tarifa mínima y máxima son 70 USD. Esta columna permite que un modelo lineal aprenda un ajuste específico para esas rutas en vez de explicar el precio solo mediante la distancia.
 
 **Respuesta 2:** ¿cuántas columnas crea one-hot para la zona de origen, y cuántas la codificación ordinal? Si el modelo es una regresión lineal, ¿cuál de las dos usarías, y por qué la otra le da información falsa?
 
-One-hot crea 8 columnas, una por cada zona de origen, mientras que la codificación ordinal crea una sola columna. Para una regresión lineal usaría one-hot. La versión ordinal asigna números de 0 a 7 y hace parecer que las zonas tienen un orden y una distancia entre ellas; por ejemplo, que una zona con código 6 es el doble de otra con código 3. Esa relación no existe en la realidad.
+One-hot crea 8 columnas y la codificación ordinal crea una. Para una regresión lineal usaría one-hot. La ordinal introduce un orden y distancias numéricas falsas entre zonas que en realidad son categorías sin jerarquía.
 
 **Respuesta 3:** ¿qué columnas del dataset no existen al pedir el taxi? ¿Qué pasaría con el modelo si las usaras para entrenar?
 
-No existen la duración real, la tarifa final ni la propina. La distancia exacta recorrida tampoco se conoce, aunque sí se puede usar una distancia estimada de la ruta. Si uso información que solo aparece al final, el modelo tendría fuga de información: durante el entrenamiento parecería muy preciso, pero al pedir un taxi no tendría esas columnas y fallaría en producción. El identificador del viaje puede existir, pero no lo usaría como predictor porque no aporta una relación de negocio.
+La duración real, la tarifa final y la propina no existen al pedir el taxi. La distancia recorrida tampoco, aunque sí puede usarse una estimación de ruta. Entrenar con información posterior produciría fuga: el modelo parecería preciso en pruebas, pero no tendría esas variables cuando deba predecir.
 
 ## Ejercicio 3: dos features para tu proyecto
 
@@ -97,21 +114,19 @@ Usa el mismo archivo de la exploración de la Semana 8 y la plantilla [`plantill
 
 Escribe qué predice tu modelo y en qué momento: qué información existe en ese instante y cuál todavía no.
 
-El modelo predice si un cantón tendrá demanda alta de emergencias dentro de tres días (`y_3`). La predicción se hace al terminar el día `t`. En ese momento ya existen el cantón, la fecha, el día de la semana, los feriados programados y el historial de emergencias hasta `t`. Todavía no existen el conteo real de `t+3`, `obj_n_emergencias_t3` ni la etiqueta `y_3`; esas columnas solo se usan como objetivo durante el entrenamiento y la evaluación.
+El modelo predice si un cantón tendrá demanda alta de emergencias dentro de tres días (`y_3`) al cierre del día t. En ese momento se conocen el cantón, la fecha, el calendario y el historial hasta t. Todavía no existen `obj_n_emergencias_t3` ni `y_3`; esas columnas se usan solo como objetivo durante entrenamiento y evaluación.
 
 ### Paso 2: construye las 2 features (15 minutos)
 
 Completa la plantilla con 2 columnas nuevas, derivadas de las existentes. Al menos una tiene que salir de uno de tus hallazgos de la exploración.
 
-El código completo está en [`plantilla-features/features_proyecto.py`](./plantilla-features/features_proyecto.py). Las dos features principales son:
-
 ```python
 datos = datos.sort_values(["cod_canton", "fecha"]).copy()
 
-# El día t-4 cae en el mismo día de la semana que t+3.
+# t-4 cae en el mismo día de la semana que t+3.
 datos["lag_4d"] = datos.groupby("cod_canton")["n_emergencias"].shift(4)
 
-# Saber si t+3 será fin de semana no usa información futura desconocida.
+# El calendario de t+3 se conoce al realizar la predicción.
 datos["dia_semana_t3"] = (datos["dia_semana"] + 2) % 7 + 1
 datos["es_fin_semana_t3"] = datos["dia_semana_t3"].isin([6, 7]).astype(int)
 ```
@@ -122,11 +137,11 @@ Para cada una: de qué hallazgo o conocimiento del dominio sale, qué evidencia 
 
 **Feature 1:**
 
-`lag_4d` sale del ciclo semanal encontrado en la exploración. Para predecir `t+3`, el dato de `t-4` corresponde al mismo día de la semana y ya se conoce al predecir. Con la OBT local su correlación con el objetivo es 0,731 en Quito, 0,845 en Guayaquil y 0,665 en Cuenca. La correlación global es 0,991, pero está inflada por las diferencias de escala entre cantones, por eso prefiero la evidencia dentro de cada ciudad. Es numérica y la dejaría como número; si se escala, los parámetros se calculan solo con entrenamiento.
+`lag_4d` sale del ciclo semanal encontrado en el EDA. Su correlación con el objetivo es 0,731 en Quito, 0,845 en Guayaquil y 0,665 en Cuenca. El dato ya existe al cierre de t y se conserva como variable numérica; cualquier escalado se ajustaría solo con entrenamiento.
 
 **Feature 2:**
 
-`es_fin_semana_t3` resume parte del patrón semanal en una variable binaria conocida por calendario. En el CSV, el objetivo promedia 38,30 emergencias cuando t+3 cae entre semana y 50,47 cuando cae en fin de semana; las medianas son 7 y 10. Como ya vale 0 o 1, no necesita one-hot ni codificación ordinal.
+`es_fin_semana_t3` resume una parte conocida del calendario. El objetivo promedia 38,30 emergencias cuando t+3 cae entre semana y 50,47 cuando cae en fin de semana; las medianas son 7 y 10. Como ya es binaria, no necesita one-hot.
 
 ## Antes de la próxima sesión
 
@@ -134,54 +149,19 @@ Para cada una: de qué hallazgo o conocimiento del dominio sale, qué evidencia 
 
 Para escalar la distancia antes de entrenar, le restas la media y la divides por la desviación estándar. ¿Con qué viajes calculas esa media: con todos, o solo con los de entrenamiento? ¿Cambia algo?
 
-Calcularía la media y la desviación solamente con los viajes de entrenamiento. Luego aplicaría esos mismos valores a validación, prueba y producción. Si uso todos los viajes, la distribución del conjunto de prueba se filtra al entrenamiento y la evaluación deja de ser completamente honesta. Puede cambiar tanto los valores escalados como la métrica final, especialmente si el periodo de prueba tiene distancias diferentes.
+Calcularía la media y la desviación solamente con los viajes de entrenamiento. Después aplicaría esos mismos valores a validación, prueba y producción. Usar todos los viajes filtraría información de prueba al entrenamiento y haría menos honesta la evaluación.
 
 ## Cómo ejecutar las soluciones
 
-### Crear el CSV crudo unificado del ECU 911
-
-Desde la carpeta `starter`, este comando consulta el catálogo oficial, descarga cada
-mes y crea `../data/ecu911_emergencias_raw.csv`:
+Desde `semana-09-sesion-01/starter`:
 
 ```powershell
-docker compose run --rm --build datos-emergencias
-```
-
-El archivo conserva los siete campos originales con separador `;` y agrega
-`_periodo`, `_archivo_origen` y `_fila_archivo`. La misma información aparece en la
-carpeta `data/` de la Semana 8 mediante un enlace al mismo archivo físico.
-
-### Preparar la OBT local
-
-Este comando transforma el crudo en 429.632 filas de cantón y día, ejecuta los
-controles de integridad y crea la misma OBT en las carpetas `data/` de ambas semanas:
-
-```powershell
-docker compose run --rm --build datos-proyecto
-```
-
-### Ejecutar los ejercicios
-
-Desde la carpeta `starter`, la primera ejecución construye la imagen y corre el Ejercicio 1:
-
-```powershell
-docker compose run --rm --build python-app
-```
-
-Para el Ejercicio 2:
-
-```powershell
-docker compose run --rm python-app python plantilla-ejercicio2/features_de_zona.py
-```
-
-Para el Ejercicio 3 del proyecto:
-
-```powershell
+docker compose run --rm --build ejercicio1-oficial
+docker compose run --rm ejercicio2-oficial
 docker compose run --rm proyecto-semana09
 ```
 
-Para repetir el EDA del proyecto de la Semana 8 desde el mismo entorno:
-
-```powershell
-docker compose run --rm proyecto-semana08
-```
+El archivo anterior `starter/mi_primer_feature_eng.py` y la solución de
+`plantilla-ejercicio2/features_de_zona.py` se conservaron. Los nuevos
+`starter/ejercicio1_features_tiempo.py` y `starter/ejercicio2_features_zona.py` del
+profesor también quedaron completos.

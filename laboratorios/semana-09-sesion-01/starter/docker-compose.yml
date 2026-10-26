@@ -43,3 +43,21 @@ services:
     volumes:
       - ../..:/app/laboratorios
     command: ["python", "features_proyecto.py"]
+
+  ejercicio1-oficial:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session:ro
+    command: ["python", "ejercicio1_features_tiempo.py"]
+
+  ejercicio2-oficial:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session:ro
+    command: ["python", "ejercicio2_features_zona.py"]

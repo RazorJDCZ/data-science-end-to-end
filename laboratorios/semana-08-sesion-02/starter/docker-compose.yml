@@ -25,3 +25,21 @@ services:
     volumes:
       - ..:/app/session
     command: ["python", "explorar_proyecto.py"]
+
+  ejercicio1-oficial:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session
+    command: ["python", "ejercicio1_explorar.py"]
+
+  ejercicio2-oficial:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session
+    command: ["python", "ejercicio2_relaciones.py"]
