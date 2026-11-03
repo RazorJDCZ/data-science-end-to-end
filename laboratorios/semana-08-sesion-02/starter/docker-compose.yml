@@ -21,9 +21,9 @@ services:
     build:
       context: ..
       dockerfile: starter/Dockerfile
-    working_dir: /app/session/plantilla-eda
+    working_dir: /app/laboratorios/semana-08-sesion-02/plantilla-eda
     volumes:
-      - ..:/app/session
+      - ../..:/app/laboratorios
     command: ["python", "explorar_proyecto.py"]
 
   ejercicio1-oficial:

@@ -1,0 +1,4 @@
+modelo,mae_entrenamiento,mae_prueba,brecha,segundos
+linea base mediana,36.6786,37.2822,0.6037,0.132
+ridge,6.3885,5.9268,-0.4617,0.33
+bosque aleatorio,3.5108,5.1231,1.6122,45.135

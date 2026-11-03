@@ -1,0 +1,29 @@
+name: semana-10-sesion-01
+
+services:
+  ejercicio1:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session
+    command: ["python", "ejercicio1_linea_base_y_ensamblaje.py"]
+
+  ejercicio2:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session
+    command: ["python", "ejercicio2_regularizacion.py"]
+
+  proyecto:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/laboratorios/semana-10-sesion-01/proyecto
+    volumes:
+      - ../..:/app/laboratorios
+    command: ["python", "modelos_proyecto.py"]

@@ -1,0 +1,29 @@
+name: semana-10-sesion-02
+
+services:
+  ejercicio1:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session
+    command: ["python", "ejercicio1_red_neuronal.py"]
+
+  ejercicio2:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session
+    command: ["python", "ejercicio2_tres_soluciones.py"]
+
+  proyecto:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/laboratorios/semana-10-sesion-02/proyecto
+    volumes:
+      - ../..:/app/laboratorios
+    command: ["python", "comparar_proyecto.py"]

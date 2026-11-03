@@ -1,0 +1,29 @@
+name: semana-09-sesion-02
+
+services:
+  ejercicio1:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session:ro
+    command: ["python", "ejercicio1_fuga.py"]
+
+  ejercicio2:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/session/starter
+    volumes:
+      - ..:/app/session:ro
+    command: ["python", "ejercicio2_pipeline.py"]
+
+  proyecto:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/laboratorios/semana-09-sesion-02/plantilla-pipeline
+    volumes:
+      - ../..:/app/laboratorios:ro
+    command: ["python", "pipeline_proyecto.py"]

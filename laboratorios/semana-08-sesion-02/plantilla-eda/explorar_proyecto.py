@@ -9,12 +9,14 @@ DIRECTORIO = Path(__file__).resolve().parent
 FIGURAS = DIRECTORIO / "figuras"
 FIGURAS.mkdir(exist_ok=True)
 
-# OBT local construida desde data/ecu911_emergencias_raw.csv.
-RUTA_PREDETERMINADA = DIRECTORIO.parents[0] / "data" / "obt_emergencias_canton_dia.csv"
+# Muestra compartida de los seis meses completos mas recientes de la OBT.
+RUTA_PREDETERMINADA = (
+    DIRECTORIO.parents[1] / "data" / "obt_emergencias_muestra_6_meses.csv"
+)
 RUTA_DATOS = Path(os.environ.get("OBT_CSV", RUTA_PREDETERMINADA))
 if not RUTA_DATOS.exists():
     raise FileNotFoundError(
-        f"No se encontro {RUTA_DATOS}. Ejecuta primero el servicio datos-proyecto."
+        f"No se encontro {RUTA_DATOS}. Ejecuta crear_muestra_ecu911_6_meses.py."
     )
 
 # Los codigos DPA se leen como texto para no perder el cero inicial (0101 = Cuenca).
@@ -91,23 +93,30 @@ for canton in ["QUITO", "GUAYAQUIL", "CUENCA"]:
     print(canton, serie[["n_emergencias", "lag_7d", "lag_4d", OBJETIVO]]
           .corr()[OBJETIVO].drop(OBJETIVO).round(3).to_dict())
 
-# Hallazgo 3: el volumen baja con los anios, asi que un P90 fijo cambia la tasa de alta demanda.
+# Hallazgo 3: el volumen cambia entre meses, asi que el umbral debe aprenderse
+# solo con el tramo de entrenamiento de la muestra.
 # Etiqueta y_3 como en el PSet 1: P90 por canton y dia de la semana de t+3, solo con entrenamiento.
 print("\n--- Hallazgo 3: deriva temporal y etiqueta ---")
-print("Emergencias por dia (todo el pais):")
-print((datos.groupby("anio")["n_emergencias"].sum() / datos.groupby("anio")["fecha"].nunique()).round(0))
+print("Emergencias por dia y mes (todo el pais):")
+print((datos.groupby("periodo")["n_emergencias"].sum()
+       / datos.groupby("periodo")["fecha"].nunique()).round(0))
 
-CORTE = pd.Timestamp("2025-07-01")
+fechas_validas = (
+    datos.loc[datos[OBJETIVO].notna(), "fecha"]
+    .drop_duplicates()
+    .sort_values()
+    .reset_index(drop=True)
+)
+CORTE = fechas_validas.iloc[int(len(fechas_validas) * 0.8)]
 datos["dia_semana_t3"] = (datos["dia_semana"] + 2) % 7 + 1
 p90 = (datos[datos["fecha"] < CORTE]
        .groupby(["cod_canton", "dia_semana_t3"])[OBJETIVO].quantile(0.9).rename("p90"))
 datos = datos.join(p90, on=["cod_canton", "dia_semana_t3"])
 datos["y_3"] = np.where(datos[OBJETIVO].isna(), np.nan, (datos[OBJETIVO] > datos["p90"]).astype(float))
 
+print("Fecha de corte:", CORTE.date())
 print("Tasa de y_3 = 1 global:", round(datos["y_3"].mean(), 3))
-print("Tasa de y_3 = 1 por anio:")
-print(datos.groupby("anio")["y_3"].mean().round(3))
-print("Tasa de y_3 = 1 en el periodo anomalo (enero 2024):",
-      round(datos.loc[datos["es_periodo_anomalo"], "y_3"].mean(), 3))
+print("Tasa de y_3 = 1 por mes:")
+print(datos.groupby("periodo")["y_3"].mean().round(3))
 print("Tasa de y_3 = 1 segun feriado en t+3:")
 print(datos.groupby("es_feriado_t3")["y_3"].mean().round(3))

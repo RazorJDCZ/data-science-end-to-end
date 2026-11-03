@@ -24,17 +24,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿qué es la fuga de información, y por qué un modelo con fuga puede verse excelente en la evaluación y fallar en producción?**
 
-_(tu respuesta)_
+La fuga de información ocurre cuando el entrenamiento usa datos que no deberían estar disponibles en el momento de hacer la predicción, por ejemplo información del futuro o estadísticas calculadas también con prueba. El modelo puede verse excelente porque ya recibió pistas sobre los casos con los que se lo evalúa, pero en producción esas pistas no existen y el error real aumenta.
 
 **El artículo describe varias formas en que se produce una fuga. ¿Cuál de ellas viste la sesión pasada con la duración del viaje?**
 
-_(tu respuesta)_
+Fue fuga del objetivo o del futuro. La duración real del viaje ayuda a explicar la tarifa, pero todavía no se conoce cuando el pasajero pide el taxi. Si se usa para predecir la tarifa en ese momento, el modelo aprende con una columna que no tendrá en producción.
 
 ## Pregunta de apertura
 
 Para escalar la distancia, le restas la media y la divides por la desviación estándar. ¿Con qué viajes calculas esa media: con todos, o solo con los de entrenamiento? ¿Cambia algo?
 
-_(tu respuesta)_
+La media y la desviación se calculan solo con los viajes de entrenamiento. Después se usan esos mismos valores para transformar prueba y datos nuevos. Sí cambia: calcularlos con todos deja que prueba influya en el entrenamiento y la evaluación deja de ser completamente independiente.
 
 ## Ejercicio 1: encontrar y corregir la fuga
 
@@ -47,33 +47,33 @@ python3 ejercicio1_fuga.py
 
 **Respuesta 1, antes de ver la solución:** en la versión del compañero, ¿en qué línea entra el conjunto de prueba al entrenamiento? ¿Qué número de la salida lo delata?
 
-_(tu respuesta)_
+Entra en la línea 26, cuando `fit_transform` calcula la imputación y el escalado usando `X` completo antes de dividir. Lo delatan las 2975 filas que vio el escalador, porque entrenamiento solo debería tener 2380.
 
 **Respuesta 2 (TODO 1 y 3):** sin resolver, la versión correcta dice que tiene 2975 filas de prueba. ¿Qué está midiendo ese error, si prueba y entrenamiento son las mismas filas?
 
-_(tu respuesta)_
+Está midiendo el error sobre las mismas filas usadas para ajustar el modelo, es decir, un error de entrenamiento. Ese número es optimista y no muestra qué tan bien generaliza a viajes que no ha visto.
 
 **Respuesta 3:** ¿cuánto esperas que cambie el error absoluto medio en prueba al corregir la fuga? Si casi no cambia, ¿significa que no había fuga?
 
-_(tu respuesta)_
+Esperaba un cambio pequeño porque las distribuciones de entrenamiento y prueba son parecidas. En efecto, el MAE cambió de 2,5375 a 2,5373. Que casi no cambie no elimina la fuga: la fuga está en el procedimiento y podría causar una diferencia mayor con otros datos.
 
 **Lo que confirmó la salida, TODO por TODO:**
 
-_(anota las filas que vio cada escalador y los dos errores)_
+El escalador del compañero vio las 2975 filas, usó una media de distancia de 8,5034 y obtuvo MAE 2,5375. El pipeline correcto vio solamente las 2380 filas de entrenamiento, usó una media de 8,5576 y obtuvo MAE 2,5373 sobre 595 filas de prueba.
 
 ## Durante el ConcepTest
 
 **Tu voto, antes de discutir en pareja** (A, B, C o D):
 
-_(tu voto)_
+No puedo elegir A, B, C o D porque el repositorio no incluye el enunciado ni las opciones del ConcepTest.
 
 **Tu razonamiento:**
 
-_(tu respuesta)_
+Necesitaría leer la pregunta y lo que significa cada opción. Marcar una letra sin esa información sería inventar la respuesta.
 
 **Después de discutir en pareja, ¿cambiaste de voto? ¿Por qué?**
 
-_(tu respuesta)_
+No aplica todavía. Lo completaría durante la clase después de conocer el enunciado y escuchar el argumento de mi compañero.
 
 ## Ejercicio 2: el pipeline completo
 
@@ -85,37 +85,51 @@ python3 ejercicio2_pipeline.py
 
 **Respuesta 1:** ¿cuántas columnas quedan después de preparar los datos? Explica de dónde sale ese número a partir de los tres grupos de columnas.
 
-_(tu respuesta)_
+Quedan 25 columnas: 2 numéricas escaladas, 5 que ya estaban listas y 18 creadas por one-hot. Estas 18 salen de 8 zonas de origen, 8 zonas de destino y 2 métodos de pago.
 
 **Respuesta 2:** ¿las medianas que aprendió el imputador coinciden con las de entrenamiento o con las de todo el dataset? ¿Qué demuestra eso?
 
-_(tu respuesta)_
+Coinciden con entrenamiento: 6,94 km y 1 pasajero. En todo el dataset son 6,93 km y 1 pasajero. Esto demuestra que el imputador se ajustó solo con entrenamiento y que prueba no participó en el aprendizaje.
 
 **Respuesta 3:** ¿qué le pasa al viaje desde el Bronx? ¿Qué habría pasado con `pd.get_dummies` aplicado por separado a ese viaje?
 
-_(tu respuesta)_
+Como Bronx no apareció en entrenamiento y se usó `handle_unknown="ignore"`, sus 8 columnas de zona de origen quedan en cero y el viaje se transforma sin error. Con `pd.get_dummies` aplicado por separado aparecería una columna nueva para Bronx y faltarían las columnas aprendidas, por lo que la forma no coincidiría con la que espera el modelo.
 
 ## Ejercicio 3: el pipeline de tu proyecto
 
 Usa tu archivo con las 2 features de la sesión pasada y la plantilla [`plantilla-pipeline/pipeline_proyecto.py`](./plantilla-pipeline/pipeline_proyecto.py).
 
+Para el proyecto se usa la muestra compartida de seis meses, no la OBT completa.
+
 ### Paso 1: clasifica tus columnas (5 minutos)
 
 Escribe qué columnas son numéricas, cuáles categóricas y cuáles ya están listas, y cuál es el objetivo. Deja fuera toda columna que no exista al momento de predecir.
 
-_(tu clasificación)_
+El objetivo es `obj_n_emergencias_t3`, la cantidad de emergencias del cantón dentro de tres días.
+
+- Numéricas: `n_emergencias`, `lag_1d`, `lag_4d`, `lag_7d`, `lag_14d`, `lag_28d`, `media_prev_7d` y `media_prev_28d`.
+- Categórica: `cod_canton`.
+- Ya listas: `es_fin_semana_t3` y `es_feriado_t3`, porque son indicadores binarios.
+
+Dejé fuera la fecha, las columnas descriptivas y los demás objetivos futuros. `lag_4d` y `es_fin_semana_t3` son las dos features creadas en la sesión anterior.
 
 ### Paso 2: decide cómo dividir (5 minutos)
 
 ¿Tu modelo predice el futuro a partir de filas con fecha? Si sí, divide por fecha; si no, al azar. Justifica.
 
-_(tu decisión)_
+Dividí por fecha porque se quiere predecir el futuro. El 80 % de fechas más antiguas se usa para entrenamiento y el 20 % más reciente para prueba; en la muestra la fecha de corte es 2026-08-23. Una división al azar mezclaría días futuros en entrenamiento y daría una evaluación poco realista.
 
 ### Paso 3: construye y corre el pipeline (15 minutos)
 
 Completa la plantilla y córrela. Anota la forma de los conjuntos de entrenamiento y prueba ya preparados, y la lista de columnas que produce.
 
-_(lo que imprimió tu pipeline)_
+El pipeline imprimió entrenamiento con forma `(32256, 234)` y prueba con forma `(8064, 234)`. Las 234 columnas producidas son:
+
+- 8 numéricas: `numericas__n_emergencias`, `numericas__lag_1d`, `numericas__lag_4d`, `numericas__lag_7d`, `numericas__lag_14d`, `numericas__lag_28d`, `numericas__media_prev_7d` y `numericas__media_prev_28d`.
+- 224 columnas one-hot con el formato `categoricas__cod_canton_<código>`, una por cada cantón aprendido.
+- 2 listas: `ya_listas__es_fin_semana_t3` y `ya_listas__es_feriado_t3`.
+
+El script también imprime la lista exacta de los 224 códigos de cantón. Se dejó la codificación one-hot como matriz dispersa para no gastar memoria guardando tantos ceros.
 
 ## Antes de la próxima sesión
 
@@ -123,4 +137,17 @@ _(lo que imprimió tu pipeline)_
 
 Ya tienes los datos listos para entrenar. Si entrenas dos modelos sobre el mismo conjunto y uno da un error mucho menor en entrenamiento que en prueba, ¿qué le está pasando?
 
-_(tu respuesta)_
+Está sobreajustando: aprendió demasiado bien los detalles y el ruido del entrenamiento, pero no generaliza igual a datos nuevos. Compararía la diferencia entre ambos errores y probaría regularización, un modelo más simple o mejores datos y features.
+
+## Cómo ejecutar las soluciones
+
+Desde `laboratorios/semana-09-sesion-02/starter`:
+
+```powershell
+docker compose build
+docker compose run --rm ejercicio1
+docker compose run --rm ejercicio2
+docker compose run --rm proyecto
+```
+
+El primer comando construye las imágenes con las versiones necesarias de pandas y scikit-learn. El servicio `proyecto` lee la muestra compartida de seis meses sin modificar el CSV.

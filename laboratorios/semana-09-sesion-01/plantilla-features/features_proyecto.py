@@ -5,15 +5,15 @@ import pandas as pd
 
 
 RUTA_PREDETERMINADA = (
-    Path(__file__).parents[1] / "data" / "obt_emergencias_canton_dia.csv"
+    Path(__file__).parents[2] / "data" / "obt_emergencias_muestra_6_meses.csv"
 )
 RUTA_DATOS = Path(os.environ.get("OBT_CSV", RUTA_PREDETERMINADA))
 OBJETIVO = "obj_n_emergencias_t3"
 
 if not RUTA_DATOS.exists():
     raise FileNotFoundError(
-        "No se encontro la OBT local. Ejecuta primero el servicio "
-        f"datos-proyecto; se esperaba '{RUTA_PREDETERMINADA}'."
+        "No se encontro la muestra local. Ejecuta primero "
+        f"crear_muestra_ecu911_6_meses.py; se esperaba '{RUTA_PREDETERMINADA}'."
     )
 
 datos = pd.read_csv(

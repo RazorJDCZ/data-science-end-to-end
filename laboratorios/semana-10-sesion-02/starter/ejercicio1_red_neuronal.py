@@ -6,8 +6,8 @@ Corre el script antes de tocar nada:
 
     python3 ejercicio1_red_neuronal.py
 
-La preparacion y la funcion evaluar son las de la sesion pasada. Corre
-sin errores sin resolver los 3 TODO.
+La preparacion y la funcion evaluar son las de la sesion pasada. Los 3
+TODO estan resueltos al final del archivo.
 """
 
 import time
@@ -71,17 +71,26 @@ ensamblaje = evaluar("gradient boosting", GradientBoostingRegressor(random_state
 
 # TODO 1: una red neuronal (MLPRegressor) con una capa oculta de 64
 # neuronas, hasta 1000 iteraciones y random_state=42.
-red = evaluar("red neuronal", MLPRegressor(hidden_layer_sizes=(64,), random_state=42))
+red = evaluar(
+    "red neuronal",
+    MLPRegressor(hidden_layer_sizes=(64,), max_iter=1000, random_state=42),
+)
 
 # TODO 2: parametros_red, cuantos numeros aprendio la red: la suma de los
 # tamanos (.size) de todas las matrices de coefs_ y todos los vectores
 # de intercepts_ del paso "modelo".
-parametros_red = None
+modelo_red = red.named_steps["modelo"]
+parametros_red = sum(matriz.size for matriz in modelo_red.coefs_)
+parametros_red += sum(vector.size for vector in modelo_red.intercepts_)
 
 # TODO 3: importancias, una serie de pandas con feature_importances_ del
 # ensamblaje, indexada por los nombres de columna que produce la
 # preparacion (get_feature_names_out), ordenada de mayor a menor.
-importancias = None
+nombres = ensamblaje.named_steps["preparar"].get_feature_names_out()
+importancias = pd.Series(
+    ensamblaje.named_steps["modelo"].feature_importances_,
+    index=nombres,
+).sort_values(ascending=False)
 
 print()
 print(pd.DataFrame(resultados).to_string(index=False))
@@ -90,6 +99,7 @@ if parametros_red is None:
     print("Parametros de la red: pendiente")
 else:
     print("Parametros de la red:", parametros_red)
+    print("Iteraciones de la red:", modelo_red.n_iter_)
 if importancias is None:
     print("Importancias del ensamblaje: pendiente")
 else:

@@ -18,17 +18,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿para qué tipo de datos y de problema conviene el aprendizaje automático clásico, y para cuál un LLM?**
 
-_(tu respuesta)_
+El aprendizaje automático clásico conviene para datos tabulares y etiquetados, cuando la tarea está bien definida, como clasificación, regresión o pronóstico. Un LLM conviene más cuando la entrada o la salida principal es lenguaje: resumir, conversar, extraer información de texto o generar contenido.
 
 **El artículo compara las dos opciones en datos, costo y explicabilidad. ¿Cuál de esas tres diferencias pesa más para tu proyecto?**
 
-_(tu respuesta)_
+Para mi proyecto pesa más el tipo de datos. Tengo una tabla con conteos diarios, cantones, calendario y rezagos, y quiero predecir un número. Un modelo clásico puede aprender directamente esa relación, cuesta poco al reutilizarlo y da una salida más estable que pedir el conteo a un LLM.
 
 ## Pregunta de apertura
 
 Para estimar la tarifa de un viaje, podrías entrenar un ensamblaje, entrenar una red neuronal o escribirle a un LLM los datos del viaje y pedirle un número. ¿Qué tendrías que medir de cada opción, además del error, para decidir cuál usar en la app de taxis?
 
-_(tu respuesta)_
+Mediría el tiempo de entrenamiento, la latencia de cada predicción, el costo por consulta, el uso de memoria, la estabilidad al repetir una entrada y la posibilidad de explicar por qué se estimó una tarifa.
 
 ## Ejercicio 1: una red neuronal frente al ensamblaje
 
@@ -41,33 +41,33 @@ python3 ejercicio1_red_neuronal.py
 
 **Respuesta 1 (TODO 1):** sin resolver, la red sale peor que el ensamblaje y aparece una advertencia `ConvergenceWarning`. ¿Qué crees que significa? ¿Qué esperas al dejarla entrenar hasta 1000 iteraciones?
 
-_(tu respuesta)_
+La advertencia significa que la red llegó al límite de iteraciones antes de terminar de optimizar sus pesos. Al permitir hasta 1000 iteraciones esperaba que convergiera y redujera su error. La advertencia desapareció, terminó en 692 iteraciones y obtuvo MAE 1,1695 en prueba, mejor que el 1,2754 del ensamblaje en esta corrida.
 
 **Respuesta 2 (TODO 2):** una capa oculta de 64 neuronas recibe las 25 columnas preparadas y entrega una tarifa. ¿Cuántos números tiene que aprender?
 
-_(tu respuesta)_
+Aprende 1.729 números: `25 × 64 = 1600` pesos de entrada, 64 sesgos de la capa oculta, 64 pesos hacia la salida y 1 sesgo de salida.
 
 **Respuesta 3 (TODO 3):** ¿qué columna esperas que el ensamblaje use más? Si la app le muestra al conductor por qué la tarifa estimada es 70 dólares, ¿cuál de los dos modelos te permite responder?
 
-_(tu respuesta)_
+Esperaba que la distancia fuera la más importante, y obtuvo importancia 0,9824. Para explicar una predicción usaría el ensamblaje porque permite revisar importancias y el recorrido de sus árboles. La red neuronal mezcla 1.729 parámetros y es menos directa de explicar.
 
 **Lo que confirmó la salida, TODO por TODO:**
 
-_(anota el error y el tiempo de cada modelo, los parámetros de la red y las 3 columnas más importantes)_
+Gradient boosting obtuvo MAE 1,0705 en entrenamiento y 1,2754 en prueba en 0,195 segundos. La red obtuvo 1,0882 y 1,1695 en 7,388 segundos. La red aprendió 1.729 parámetros y terminó en 692 iteraciones. Las tres columnas más importantes del ensamblaje fueron `distancia_km` (0,9824), `es_tarifa_fija` (0,0120) y `es_hora_pico` (0,0028).
 
 ## Durante el ConcepTest
 
 **Tu voto, antes de discutir en pareja** (A, B, C o D):
 
-_(tu voto)_
+No puedo elegir A, B, C o D porque el repositorio no incluye el enunciado ni las opciones del ConcepTest.
 
 **Tu razonamiento:**
 
-_(tu respuesta)_
+Necesitaría conocer la pregunta y el significado de cada alternativa. Elegir una letra sin esa información sería inventarla.
 
 **Después de discutir en pareja, ¿cambiaste de voto? ¿Por qué?**
 
-_(tu respuesta)_
+No aplica todavía. Lo completaría durante la clase después de conocer el enunciado y escuchar el razonamiento de mi compañero.
 
 ## Ejercicio 2: tres soluciones sobre los mismos 20 viajes
 
@@ -83,23 +83,25 @@ python3 ejercicio2_tres_soluciones.py
 
 **Respuesta 1:** ¿qué LLM usaste? Completa la tabla con los números de tu corrida.
 
+Usé el LLM de esta conversación para responder el prompt. Para estimar un posible costo de API tomé como referencia GPT-5.4 mini, cuyo precio oficial de entrada consultado el 3 de noviembre de 2026 es 0,75 USD por millón de tokens.
+
 | | Error en los 20 viajes | Costo de entrenar | Costo de 10 000 viajes al mes | ¿Puedes explicar una predicción? |
 |---|---|---|---|---|
-| Gradient boosting | _(…)_ | _(…)_ | _(…)_ | _(…)_ |
-| Red neuronal | _(…)_ | _(…)_ | _(…)_ | _(…)_ |
-| LLM | _(…)_ | _(…)_ | _(…)_ | _(…)_ |
+| Gradient boosting | 0,8957 | 0 USD (0,27 s local) | 0 USD de API | Sí, mediante importancias |
+| Red neuronal | 0,9637 | 0 USD (8,75 s local) | 0 USD de API | Difícil |
+| LLM | 1,4045 | 0 USD para nosotros | 0,2721 USD | Puede generar una explicación, pero no garantiza que sea fiel |
 
 **Respuesta 2:** corre el mismo prompt otra vez, en una conversación nueva. ¿Te dio los mismos 20 números? ¿Qué problema le trae eso a una app que le cobra al pasajero?
 
-_(tu respuesta)_
+No dio exactamente lo mismo: una segunda respuesta manual cambió 17 de los 20 números. Esa variación es peligrosa en una app de cobro porque dos pasajeros con el mismo viaje podrían recibir tarifas distintas. Para precios se necesita una salida determinista, versionada y fácil de auditar.
 
 **Respuesta 3:** busca en tus 20 respuestas la peor predicción del LLM. ¿Qué tiene de particular ese viaje? ¿Lo habría aprendido el ensamblaje con las 2380 filas de entrenamiento?
 
-_(tu respuesta)_
+La peor fue un viaje de JFK Airport a JFK Airport de 1,01 km. El valor real fue 11,46 USD y el LLM respondió 6,80, con error 4,66. Es particular porque sale y llega al aeropuerto, pero no es la ruta fija entre JFK y Manhattan. El ensamblaje pudo ver más combinaciones en sus 2.380 filas y aprender esa excepción mejor que el prompt con solo 30 ejemplos.
 
 **Si terminas antes:** el error en los 20 viajes de muestra no es el mismo que en los 595 de prueba. ¿Por qué no se mide el LLM sobre los 595, y qué tan confiable es una comparación sobre 20?
 
-_(tu respuesta)_
+Evaluar las 595 filas exigiría prompts más largos o muchas consultas, con más costo y trabajo para conservar el orden. Una muestra de 20 permite hacer la práctica, pero su MAE tiene mucha variación y puede depender de qué viajes salieron. La decisión principal debería usar el conjunto completo de prueba.
 
 ## Ejercicio 3: ¿qué solución conviene para tu proyecto?
 
@@ -117,9 +119,13 @@ Elige 10 filas de tu conjunto de prueba y escribe un prompt con algunas filas de
 
 Una tabla con las tres opciones (métrica, costo, explicabilidad) y un párrafo que diga cuál usarías en tu proyecto y por qué, con los números de tu tabla.
 
-_(tu tabla)_
+| Opción | MAE prueba completa | MAE en las mismas 10 filas | Entrenamiento | Costo estimado para 10.000 | Explicabilidad |
+|---|---:|---:|---:|---:|---|
+| Bosque aleatorio | 5,1231 | 31,4083 | 36,395 s | 0 USD de API | Media; permite revisar importancias |
+| Red neuronal | 4,9613 | 18,1299 | 37,607 s; 15.105 parámetros | 0 USD de API | Baja |
+| LLM | No medido | 26,1000 | No se entrenó localmente | 0,4174 USD | Puede dar texto, pero no garantiza fidelidad |
 
-_(tu decisión)_
+Usaría el bosque aleatorio. Su MAE completo es solo 0,1618 mayor que el de la red, pero es más sencillo de explicar, siempre produce lo mismo con el mismo modelo y no cobra por cada consulta. No escogería según las 10 filas porque esa muestra salió difícil y cambió mucho el orden de los modelos. El LLM quedó sin evaluación completa y agrega costo y variación innecesarios para predecir un conteo tabular.
 
 ## Antes de la próxima sesión
 
@@ -127,4 +133,19 @@ _(tu decisión)_
 
 Dos compañeros reportan errores distintos para "el mismo" gradient boosting sobre los mismos datos de taxis. ¿Qué tendrías que saber de cada corrida para descubrir por qué no coinciden?
 
-_(tu respuesta)_
+Revisaría la versión exacta del CSV, qué filas se limpiaron, las columnas usadas, la división y su semilla, el pipeline, los valores imputados, los hiperparámetros, la versión de scikit-learn y la métrica. También comprobaría que ambos ajustaron el preprocesamiento solo con entrenamiento.
+
+## Datos, precio y ejecución
+
+El proyecto usa `laboratorios/data/obt_emergencias_muestra_6_meses.csv`, con datos de abril a septiembre de 2026. El precio usado para el cálculo del LLM está documentado en la [página oficial de GPT-5.4 mini](https://developers.openai.com/api/docs/models/gpt-5.4-mini).
+
+Desde `semana-10-sesion-02/starter`:
+
+```powershell
+docker compose build
+docker compose run --rm ejercicio1
+docker compose run --rm ejercicio2
+docker compose run --rm proyecto
+```
+
+El último comando crea `proyecto/comparacion_proyecto.csv` y los archivos de la prueba del LLM.

@@ -26,15 +26,23 @@ desde `semana-09-sesion-01/starter` se ejecuta:
 docker compose run --rm --build datos-emergencias
 ```
 
-Después, este comando construye la OBT local que usan los ejercicios del proyecto:
+Después, este comando construye la OBT local completa:
 
 ```powershell
 docker compose run --rm --build datos-proyecto
 ```
 
-La OBT resultante queda en `data/obt_emergencias_canton_dia.csv`. Tiene una fila por
-cantón y día, y las dos semanas apuntan al mismo archivo físico para no duplicar
-varios gigabytes.
+La OBT completa queda en `data/obt_emergencias_canton_dia.csv`. Para los talleres no
+se usan todos esos años. Este comando crea una muestra con los seis meses completos
+más recientes:
+
+```powershell
+docker compose run --rm --build muestra-proyecto
+```
+
+La muestra compartida queda en
+`laboratorios/data/obt_emergencias_muestra_6_meses.csv`: contiene 40.992 filas, 224
+cantones y fechas desde el 1 de abril hasta el 30 de septiembre de 2026.
 
 ## Antes de empezar
 
@@ -121,13 +129,13 @@ Usa el archivo que tu pipeline de la Semana 7 deja listo para modelar, y la plan
 
 Reemplaza la ruta del archivo y el nombre de la columna que tu modelo va a predecir. Corre los pasos 1 a 3.
 
-La OBT local tiene 429.632 filas, 37 columnas, 224 cantones y fechas desde julio de 2021 hasta septiembre de 2026. Los faltantes esperados son 224 en `lag_1d`, 1.568 en `lag_7d` y `media_prev_7d`, 3.136 en `lag_14d`, 6.272 en `lag_28d` y `media_prev_28d`, 672 en `obj_n_emergencias_t3` y 1.568 en `obj_n_emergencias_t7`. `nombre_feriado` falta en 413.504 días que no son feriado. El IQR marca 54.200 valores en `obj_n_emergencias_t3`.
+La muestra tiene 40.992 filas, 37 columnas, 224 cantones y fechas desde abril hasta septiembre de 2026. Como se recortó después de construir la OBT, los rezagos iniciales ya están calculados. Los faltantes esperados son 672 en `obj_n_emergencias_t3`, 1.568 en `obj_n_emergencias_t7` y 39.872 en `nombre_feriado`, porque la mayoría de días no son feriado. El IQR marca 5.001 valores en `obj_n_emergencias_t3`.
 
 ### Paso 2: relaciones (10 minutos)
 
 Completa los pasos 4 y 5: la relación entre tu objetivo y la variable que esperas que más influya, y las consultas que confirman lo que encuentres.
 
-Comparé `obj_n_emergencias_t3` con las emergencias de t y de t−4 en Quito. La correlación con t es −0,336 porque t+3 cae en otro día de la semana. Con t−4 sube a 0,731 porque ambos corresponden al mismo día semanal. La relación con t−4 también es 0,845 en Guayaquil y 0,665 en Cuenca.
+Comparé `obj_n_emergencias_t3` con las emergencias de t, t−7 y t−4. En Quito las correlaciones son −0,543, −0,508 y 0,664, respectivamente. `lag_4d` es mejor porque t−4 y t+3 corresponden al mismo día semanal. Su correlación también es 0,784 en Guayaquil y 0,797 en Cuenca.
 
 ### Paso 3: tres hallazgos que afectarían el modelado (10 minutos)
 
@@ -135,15 +143,15 @@ Para cada hallazgo, escribe qué encontraste, el número o el gráfico que lo co
 
 **Hallazgo 1:**
 
-Los 54.200 valores marcados por IQR pertenecen a 77 cantones, principalmente los de mayor volumen; no son errores que deban eliminarse. Quito y Guayaquil reúnen el 39,1% de todas las emergencias, mientras 36 cantones tienen una mediana de 2 o menos por día. **Cambio:** comparar cada cantón con su propio P90 y reportar métricas por grupos de tamaño.
+Los 5.001 valores marcados por IQR pertenecen a 54 cantones, principalmente los de mayor volumen; no son errores que deban eliminarse. Quito y Guayaquil reúnen el 39,7% de todas las emergencias, mientras 36 cantones tienen una mediana de 2 o menos por día. **Cambio:** comparar cada cantón con su propia historia y reportar métricas por grupos de tamaño.
 
 **Hallazgo 2:**
 
-Existe un ciclo semanal fuerte: el domingo promedia 52,6 emergencias y el martes 35,5. El rezago de t−4 coincide con el día semanal de t+3 y resulta más informativo que el conteo de t. **Cambio:** agregar `lag_4d` para el horizonte de tres días.
+Existe un ciclo semanal fuerte: el domingo promedia 50,4 emergencias y el martes 33,8. El rezago de t−4 coincide con el día semanal de t+3 y resulta más informativo que el conteo de t. **Cambio:** agregar `lag_4d` para el horizonte de tres días.
 
 **Hallazgo 3:**
 
-El promedio nacional baja de 10.342 emergencias diarias en 2021 a 8.870 en 2025 y repunta a 8.946 en 2026. La tasa de alta demanda cambia entre años; enero de 2024 tiene 1,4%, mientras un feriado en t+3 eleva la tasa a 19,6%. **Cambio:** usar división temporal, métricas para clases desbalanceadas, evaluar un P90 móvil y conservar `es_feriado_t3`.
+El promedio nacional cambia dentro de los seis meses: pasa de 9.384 emergencias diarias en mayo a 8.395 en julio y 9.119 en septiembre. Con un P90 aprendido antes del corte del 23 de agosto, la tasa de alta demanda sube de 5,8% en julio a 13,1% en septiembre; en feriado t+3 es 9,7% frente a 8,8% en días normales. **Cambio:** usar división temporal, vigilar la deriva mes a mes y conservar `es_feriado_t3`.
 
 ## Antes de la próxima sesión
 

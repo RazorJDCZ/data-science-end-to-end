@@ -26,6 +26,15 @@ services:
       - ../..:/app/laboratorios
     command: ["python", "preparar_obt_emergencias.py"]
 
+  muestra-proyecto:
+    build:
+      context: ..
+      dockerfile: starter/Dockerfile
+    working_dir: /app/laboratorios
+    volumes:
+      - ../..:/app/laboratorios
+    command: ["python", "crear_muestra_ecu911_6_meses.py"]
+
   proyecto-semana08:
     build:
       context: ..

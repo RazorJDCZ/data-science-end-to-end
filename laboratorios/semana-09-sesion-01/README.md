@@ -19,15 +19,18 @@ Ten a mano tus 3 hallazgos de la exploración de la Semana 8, Sesión 2: las fea
 ### Datos locales del proyecto ECU 911
 
 El CSV crudo está en `data/ecu911_emergencias_raw.csv`. Para descargar nuevamente los
-63 meses y después construir la OBT local, ejecuta desde `starter`:
+63 meses, construir la OBT y obtener la muestra de seis meses, ejecuta desde `starter`:
 
 ```powershell
 docker compose run --rm --build datos-emergencias
 docker compose run --rm --build datos-proyecto
+docker compose run --rm --build muestra-proyecto
 ```
 
-La OBT queda en `data/obt_emergencias_canton_dia.csv` y comparte el mismo archivo
-físico con la Semana 8. Los CSV grandes están excluidos de Git.
+Los ejercicios del proyecto usan
+`laboratorios/data/obt_emergencias_muestra_6_meses.csv`, con 40.992 filas entre abril
+y septiembre de 2026. La OBT completa se conserva localmente solo para regenerar la
+muestra.
 
 ## Antes de empezar
 
@@ -114,7 +117,7 @@ Usa el mismo archivo de la exploración de la Semana 8 y la plantilla [`plantill
 
 Escribe qué predice tu modelo y en qué momento: qué información existe en ese instante y cuál todavía no.
 
-El modelo predice si un cantón tendrá demanda alta de emergencias dentro de tres días (`y_3`) al cierre del día t. En ese momento se conocen el cantón, la fecha, el calendario y el historial hasta t. Todavía no existen `obj_n_emergencias_t3` ni `y_3`; esas columnas se usan solo como objetivo durante entrenamiento y evaluación.
+El modelo estima cuántas emergencias tendrá un cantón dentro de tres días (`obj_n_emergencias_t3`) al cierre del día t. En ese momento se conocen el cantón, la fecha, el calendario y el historial hasta t. El conteo de t+3 todavía no existe y se usa solo como objetivo durante entrenamiento y evaluación.
 
 ### Paso 2: construye las 2 features (15 minutos)
 
@@ -137,11 +140,11 @@ Para cada una: de qué hallazgo o conocimiento del dominio sale, qué evidencia 
 
 **Feature 1:**
 
-`lag_4d` sale del ciclo semanal encontrado en el EDA. Su correlación con el objetivo es 0,731 en Quito, 0,845 en Guayaquil y 0,665 en Cuenca. El dato ya existe al cierre de t y se conserva como variable numérica; cualquier escalado se ajustaría solo con entrenamiento.
+`lag_4d` sale del ciclo semanal encontrado en el EDA. En la muestra su correlación con el objetivo es 0,664 en Quito, 0,784 en Guayaquil y 0,797 en Cuenca; globalmente es 0,991. El dato ya existe al cierre de t y se conserva como variable numérica; cualquier escalado se ajusta solo con entrenamiento.
 
 **Feature 2:**
 
-`es_fin_semana_t3` resume una parte conocida del calendario. El objetivo promedia 38,30 emergencias cuando t+3 cae entre semana y 50,47 cuando cae en fin de semana; las medianas son 7 y 10. Como ya es binaria, no necesita one-hot.
+`es_fin_semana_t3` resume una parte conocida del calendario. En la muestra el objetivo promedia 36,76 emergencias cuando t+3 cae entre semana y 48,29 cuando cae en fin de semana; las medianas son 7 y 10. Como ya es binaria, no necesita one-hot.
 
 ## Antes de la próxima sesión
 

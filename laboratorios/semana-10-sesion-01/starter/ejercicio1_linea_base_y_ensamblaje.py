@@ -7,7 +7,7 @@ Corre el script antes de tocar nada:
 
 La preparacion es el pipeline de la Semana 9, Sesion 2. Cada modelo se
 evalua con la misma division y se registra en la tabla de resultados.
-Corre sin errores sin resolver los 4 TODO.
+Los 4 TODO estan resueltos al final del archivo.
 """
 
 import time
@@ -71,21 +71,25 @@ def evaluar(nombre, modelo):
 
 # TODO 1: la linea base, un DummyRegressor que siempre predice la mediana
 # de la tarifa de entrenamiento.
-linea_base = DummyRegressor()
+linea_base = DummyRegressor(strategy="median")
 evaluar("linea base", linea_base)
 
 # TODO 2: un arbol de decision (DecisionTreeRegressor) sin ningun limite,
 # con random_state=42.
-arbol = DummyRegressor()
+arbol = DecisionTreeRegressor(random_state=42)
 evaluar("arbol sin limite", arbol)
 
 # TODO 3: el mismo arbol, regularizado con max_depth=8.
-arbol_limitado = DummyRegressor()
+arbol_limitado = DecisionTreeRegressor(max_depth=8, random_state=42)
 evaluar("arbol max_depth=8", arbol_limitado)
 
 # TODO 4: un bosque aleatorio (RandomForestRegressor) de 200 arboles, con
 # random_state=42.
-bosque = DummyRegressor()
+bosque = RandomForestRegressor(
+    n_estimators=200,
+    random_state=42,
+    n_jobs=1,
+)
 evaluar("bosque aleatorio", bosque)
 
 tabla = pd.DataFrame(resultados)
