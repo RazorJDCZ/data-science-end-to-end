@@ -14,7 +14,9 @@ pandas y matplotlib, de la sesión pasada. numpy se instala junto con pandas; ve
 python3 -c "import numpy; print(numpy.__version__)"
 ```
 
-Ten a mano tus 3 hallazgos de la exploración de la Semana 8, Sesión 2: las features de hoy salen de ahí.
+Ten a mano tu notebook de exploración de la Semana 8, Sesión 2: las features de hoy salen de tus 3 hallazgos.
+
+Los laboratorios de hoy siguen siendo notebooks: diseñar una feature es probar varias ideas y mirar cuál aporta. La próxima sesión, las features que se queden pasan a un script, que es lo que corre en producción.
 
 ### Datos locales del proyecto ECU 911
 
@@ -52,7 +54,7 @@ Crearía `es_tarifa_fija`, que vale 1 cuando el viaje conecta JFK con Manhattan,
 
 ## Ejercicio 1: features de fecha y hora
 
-Archivo: [`starter/ejercicio1_features_tiempo.py`](./starter/ejercicio1_features_tiempo.py), sobre [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv), el mismo dataset de la sesión pasada. El script quita los errores confirmados y resuelve los 4 `TODO`: hora, día de la semana, fin de semana, hora pico y la hora como ciclo.
+Notebook nuevo del profesor: [`starter/ejercicio1_features_tiempo.ipynb`](./starter/ejercicio1_features_tiempo.ipynb). También se conserva la solución en [`starter/ejercicio1_features_tiempo.py`](./starter/ejercicio1_features_tiempo.py), sobre [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv). El script quita los errores confirmados y resuelve los 4 `TODO`: hora, día de la semana, fin de semana, hora pico y la hora como ciclo.
 
 ```
 cd laboratorios/semana-09-sesion-01/starter
@@ -91,7 +93,7 @@ No aplica todavía. Lo completaría durante la clase y anotaría qué argumento 
 
 ## Ejercicio 2: zona, codificación y disponibilidad
 
-Archivo: [`starter/ejercicio2_features_zona.py`](./starter/ejercicio2_features_zona.py), sobre el mismo `viajes_taxi.csv`. Los 4 `TODO` están resueltos y las cuatro comprobaciones finales muestran `OK`.
+Notebook nuevo del profesor: [`starter/ejercicio2_features_zona.ipynb`](./starter/ejercicio2_features_zona.ipynb). Se conserva además [`starter/ejercicio2_features_zona.py`](./starter/ejercicio2_features_zona.py), sobre el mismo `viajes_taxi.csv`. Los 4 `TODO` están resueltos y las cuatro comprobaciones finales muestran `OK`.
 
 ```
 python3 ejercicio2_features_zona.py
@@ -111,7 +113,7 @@ La duración real, la tarifa final y la propina no existen al pedir el taxi. La 
 
 ## Ejercicio 3: dos features para tu proyecto
 
-Usa el mismo archivo de la exploración de la Semana 8 y la plantilla [`plantilla-features/features_proyecto.py`](./plantilla-features/features_proyecto.py).
+Usa el mismo archivo de tu exploración de la Semana 8 y copia la plantilla [`plantilla-features/features_proyecto.ipynb`](./plantilla-features/features_proyecto.ipynb) a la carpeta de tu proyecto. Todo lo que pide este ejercicio queda en el notebook: el código de cada feature, la evidencia y la justificación en las celdas de texto.
 
 ### Paso 1: el momento de la predicción (5 minutos)
 
@@ -134,11 +136,13 @@ datos["dia_semana_t3"] = (datos["dia_semana"] + 2) % 7 + 1
 datos["es_fin_semana_t3"] = datos["dia_semana_t3"].isin([6, 7]).astype(int)
 ```
 
+En el notebook nuevo, cada feature puede quedar en su propia celda junto con la evidencia que justifica conservarla.
+
 ### Paso 3: justifica cada feature (5 minutos)
 
-Para cada una: de qué hallazgo o conocimiento del dominio sale, qué evidencia muestra que aporta (una correlación, una diferencia de promedios), y por qué existe en el momento de predecir. Si alguna es categórica, di qué codificación usarías según el modelo que planeas entrenar.
+Debajo de cada feature: de qué hallazgo o conocimiento del dominio sale, qué evidencia muestra que aporta, y por qué existe en el momento de predecir. Si alguna es categórica, di qué codificación usarías según el modelo que planeas entrenar. Antes de hacer commit, reinicia el kernel y corre todo.
 
-**Feature 1:**
+**Ruta de tu notebook de features en tu fork:**
 
 `lag_4d` sale del ciclo semanal encontrado en el EDA. En la muestra su correlación con el objetivo es 0,664 en Quito, 0,784 en Guayaquil y 0,797 en Cuenca; globalmente es 0,991. El dato ya existe al cierre de t y se conserva como variable numérica; cualquier escalado se ajusta solo con entrenamiento.
 

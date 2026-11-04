@@ -14,7 +14,7 @@ pandas y matplotlib ya vienen en el Codespace. En tu laptop, instálalos con `pi
 python3 -c "import matplotlib; print(matplotlib.__version__)"
 ```
 
-Los scripts de hoy guardan cada gráfico como imagen en una carpeta `figuras/`. Ábrelas desde el explorador de archivos de VS Code. También puedes correr el mismo código en un notebook de Jupyter (en el Codespace, crea un archivo `.ipynb` y elige el kernel de Python 3.11), donde el gráfico aparece debajo de la celda.
+Los laboratorios de hoy son notebooks de Jupyter, como el diagnóstico de la Semana 4: cada gráfico aparece debajo de la celda que lo dibuja. Una exploración se lee para decidir qué hacer con los datos; por eso va en un notebook y no en un script.
 
 ### Datos locales del proyecto ECU 911
 
@@ -64,18 +64,20 @@ Las 15 tarifas extremas aumentan mucho el error y pueden empujar los coeficiente
 
 ## Ejercicio 1: resumen, distribución y atípicos
 
-Archivo: [`starter/ejercicio1_explorar.py`](./starter/ejercicio1_explorar.py), sobre [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv): 3000 viajes en taxi de Nueva York, con fecha y hora de inicio, zona de origen y de destino, distancia, duración, pasajeros, método de pago, tarifa y propina. El script lee el archivo, resuelve los 4 `TODO`, arma los gráficos y los guarda en `figuras/`:
+Notebook nuevo del profesor: [`starter/ejercicio1_explorar.ipynb`](./starter/ejercicio1_explorar.ipynb). También se conserva la solución en [`starter/ejercicio1_explorar.py`](./starter/ejercicio1_explorar.py), sobre [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv): 3000 viajes en taxi de Nueva York. El script resuelve los 4 `TODO`, arma los gráficos y los guarda en `figuras/`:
 
 ```
 cd laboratorios/semana-08-sesion-02/starter
 python3 ejercicio1_explorar.py
 ```
 
+El notebook se puede ejecutar con **Run All** para comparar sus celdas con el script resuelto.
+
 **Respuesta 1 (TODO 1), antes de ver la solución:** en `describe()`, ¿qué dos valores de la tabla te harían sospechar de un error sin necesidad de graficar nada?
 
 El máximo de `tarifa` (999,99) y el mínimo de `duracion_min` (−74) son sospechosos. La tarifa está muy lejos del percentil 75 (32,55) y una duración negativa es imposible.
 
-**Respuesta 2 (TODO 2):** abre `figuras/hist_tarifa.png` después del TODO 2. ¿Por qué casi todo el histograma queda comprimido a la izquierda?
+**Respuesta 2 (TODO 2):** mira el histograma después del TODO 2. ¿Por qué casi todo el histograma queda comprimido a la izquierda?
 
 Las tarifas de 999,99 estiran el eje horizontal hasta casi 1.000 USD. Como la mayoría de los viajes cuesta menos de 70 USD, sus barras quedan comprimidas en una fracción pequeña del gráfico.
 
@@ -103,7 +105,7 @@ No aplica todavía. Lo completaría durante la clase y anotaría qué argumento 
 
 ## Ejercicio 2: relaciones entre variables
 
-Archivo: [`starter/ejercicio2_relaciones.py`](./starter/ejercicio2_relaciones.py), sobre el mismo `viajes_taxi.csv`. La solución quita solo los errores confirmados y completa los 5 `TODO`: dispersión de distancia contra tarifa, propina por método de pago, correlaciones con la tarifa, y pasajeros vacíos o en 0. Al final, las cinco comprobaciones muestran `OK`.
+Notebook nuevo del profesor: [`starter/ejercicio2_relaciones.ipynb`](./starter/ejercicio2_relaciones.ipynb). Se conserva además [`starter/ejercicio2_relaciones.py`](./starter/ejercicio2_relaciones.py), sobre el mismo `viajes_taxi.csv`. La solución quita solo los errores confirmados y completa los 5 `TODO`; las comprobaciones muestran `OK`.
 
 ```
 python3 ejercicio2_relaciones.py
@@ -123,7 +125,7 @@ No. Aunque la correlación de la duración con la tarifa es 0,956, la duración 
 
 ## Ejercicio 3: explora el dataset de tu proyecto
 
-Usa el archivo que tu pipeline de la Semana 7 deja listo para modelar, y la plantilla [`plantilla-eda/explorar_proyecto.py`](./plantilla-eda/explorar_proyecto.py).
+Usa el archivo que tu pipeline de la Semana 7 deja listo para modelar. Copia la plantilla [`plantilla-eda/explorar_proyecto.ipynb`](./plantilla-eda/explorar_proyecto.ipynb) a la carpeta de tu proyecto: el notebook es tu entregable, con el código, lo que mostró y lo que concluyes en el mismo lugar.
 
 ### Paso 1: resumen y variable objetivo (5 minutos)
 
@@ -139,9 +141,9 @@ Comparé `obj_n_emergencias_t3` con las emergencias de t, t−7 y t−4. En Quit
 
 ### Paso 3: tres hallazgos que afectarían el modelado (10 minutos)
 
-Para cada hallazgo, escribe qué encontraste, el número o el gráfico que lo confirma, y qué cambia en el modelo por su causa (una fila que quitas, una columna que no puedes usar, una variable que hay que transformar).
+En el paso 5 del notebook, para cada hallazgo: una celda de código con el número o el gráfico que lo confirma, y debajo, en la celda de texto, qué encontraste y qué cambia en el modelo por su causa (una fila que quitas, una columna que no puedes usar, una variable que hay que transformar). Antes de hacer commit, reinicia el kernel y corre todo.
 
-**Hallazgo 1:**
+**Ruta de tu notebook de exploración en tu fork:**
 
 Los 5.001 valores marcados por IQR pertenecen a 54 cantones, principalmente los de mayor volumen; no son errores que deban eliminarse. Quito y Guayaquil reúnen el 39,7% de todas las emergencias, mientras 36 cantones tienen una mediana de 2 o menos por día. **Cambio:** comparar cada cantón con su propia historia y reportar métricas por grupos de tamaño.
 
