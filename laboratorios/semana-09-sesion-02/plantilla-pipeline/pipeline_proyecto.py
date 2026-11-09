@@ -19,7 +19,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-
 RUTA_PREDETERMINADA = (
     Path(__file__).parents[2]
     / "data"

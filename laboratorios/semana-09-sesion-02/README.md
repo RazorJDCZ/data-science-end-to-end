@@ -97,7 +97,7 @@ Como Bronx no apareció en entrenamiento y se usó `handle_unknown="ignore"`, su
 
 ## Ejercicio 3: el pipeline de tu proyecto, como script
 
-Copia la plantilla [`plantilla-pipeline/pipeline_proyecto.py`](./plantilla-pipeline/pipeline_proyecto.py) a la carpeta de tu proyecto, al lado de tu notebook de features. Desde la próxima sesión, tus notebooks de modelos importan este archivo en vez de copiar su código:
+Copia la plantilla [`plantilla-pipeline/pipeline_proyecto.py`](./plantilla-pipeline/pipeline_proyecto.py) a `psets/proyecto/modelado/`, al lado de tu notebook de features. Desde la próxima sesión, tus notebooks de modelos importan este archivo en vez de copiar su código:
 
 Para el proyecto se usa la muestra compartida de seis meses, no la OBT completa.
 
@@ -131,7 +131,7 @@ Dividí por fecha porque se quiere predecir el futuro. El 80 % de fechas más an
 
 ### Paso 4: corre el script (10 minutos)
 
-Desde una terminal, en la carpeta de tu proyecto:
+Desde una terminal, en `psets/proyecto/modelado/`:
 
 ```
 python3 pipeline_proyecto.py
