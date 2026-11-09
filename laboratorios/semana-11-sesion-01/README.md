@@ -30,17 +30,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿qué tres cosas hay que versionar en un proyecto de machine learning, y con qué herramienta versiona el autor cada una?**
 
-_(tu respuesta)_
+Hay que versionar tres cosas: el código con Git, los datos con DVC y el modelo con MLflow. Entendí que no basta con poder volver al mismo código, porque el resultado también depende de la versión de los datos y del modelo que salió de cada entrenamiento.
 
 **¿Por qué no alcanza con Git para versionar los datos?**
 
-_(tu respuesta)_
+Git está pensado principalmente para archivos de código y texto. Un dataset puede ser grande, binario o cambiar muchas veces, y guardarlo completo en cada versión hace crecer demasiado el repositorio. DVC guarda en Git la referencia y la huella de la versión, mientras el archivo pesado puede vivir en otro almacenamiento.
 
 ## Pregunta de apertura
 
 Dos compañeros reportan errores distintos para "el mismo" gradient boosting sobre los mismos datos de taxis. ¿Qué tendrías que saber de cada corrida para descubrir por qué no coinciden?
 
-_(tu respuesta)_
+Necesitaría conocer los hiperparámetros, la semilla y el tipo de división, qué filas quedaron en entrenamiento y prueba, la huella del archivo, la versión del código y las librerías. También compararía la métrica y, si es posible, cargaría el artefacto del modelo para comprobar la corrida sin entrenarlo otra vez.
 
 ## Ejercicio 1: registrar cada corrida con MLflow
 
@@ -48,33 +48,39 @@ Notebook: [`starter/ejercicio1_registrar_corridas.ipynb`](./starter/ejercicio1_r
 
 **Respuesta 1 (antes de los TODO):** sin resolver, el notebook entrena los tres modelos e imprime sus errores. ¿Cuál de los dos gradient boosting tiene razón? ¿Qué parte de la salida te permite saberlo, y qué parte no?
 
-_(tu respuesta)_
+Los dos resultados son correctos para la división que usó cada uno. La salida permite ver que uno dividió con semilla 42 y obtuvo MAE 1.2754, mientras el otro usó semilla 7 y obtuvo 1.1867. Esa impresión por sí sola no demuestra la huella de los datos, todos los parámetros ni conserva el modelo que produjo el resultado.
 
 **Respuesta 2 (TODO 2 y 3):** de todo lo que se puede registrar de una corrida, ¿qué crees que explica la diferencia entre los dos gradient boosting? ¿Qué parámetro esperas ver distinto en la tabla del paso 5?
 
-_(tu respuesta)_
+La diferencia más clara es la semilla de la división, porque cambia qué viajes llegan al conjunto de prueba. En la tabla esperaba ver `semilla_division=42` en la primera corrida y `semilla_division=7` en la del compañero; la huella del CSV debía ser la misma.
 
 **Respuesta 3 (TODO 4):** el registro ya tiene los parámetros y las métricas. ¿Para qué guardar además el modelo entrenado?
 
-_(tu respuesta)_
+Para poder recuperar exactamente el pipeline ya ajustado y volver a predecir sin repetir el entrenamiento. También sirve para comprobar que la métrica registrada salió de ese artefacto y no de otro modelo parecido entrenado después.
 
 **Lo que mostró la tabla del paso 5:**
 
-_(anota el error en prueba, la semilla de la división y la huella de los datos de cada corrida)_
+La tabla mostró:
+
+- Bosque aleatorio: MAE de prueba 1.3016, semilla 42 y huella `cc636c7813cf`.
+- Gradient boosting propio: MAE 1.2754, semilla 42 y la misma huella.
+- Gradient boosting del compañero: MAE 1.1867, semilla 7 y la misma huella.
+
+Esto confirmó que el archivo no cambió; lo que cambió fue la división.
 
 ## Durante el ConcepTest
 
 **Tu voto, antes de discutir en pareja** (A, B, C o D):
 
-_(tu voto)_
+No pude marcar una letra porque el README no incluye el enunciado ni las opciones del ConcepTest. No quise inventar una alternativa.
 
 **Tu razonamiento:**
 
-_(tu respuesta)_
+Mi criterio habría sido elegir la opción que exige comparar las corridas con la misma versión de datos, la misma división y los parámetros registrados, no solo mirar cuál número es menor.
 
 **Después de discutir en pareja, ¿cambiaste de voto? ¿Por qué?**
 
-_(tu respuesta)_
+No hay una discusión de pareja registrada en el material. Después de ejecutar el ejercicio sí reforcé la idea de que una mejora en una sola división no prueba por sí sola que un modelo sea mejor.
 
 ## Ejercicio 2: comparar con evidencia y elegir
 
@@ -82,19 +88,19 @@ Solo o en pareja. Notebook: [`starter/ejercicio2_comparar_y_elegir.ipynb`](./sta
 
 **Respuesta 1:** ¿qué modelo quedó primero en el registro, y por cuánto le gana al segundo?
 
-_(tu respuesta)_
+Quedó primero la red neuronal con MAE 1.1695. El segundo fue gradient boosting con 1.2754, así que la diferencia fue aproximadamente 0.1058 de MAE.
 
 **Respuesta 2:** el paso 5 carga el modelo ganador desde el registro y vuelve a calcular su error. ¿Qué te garantiza que coincida con el número registrado? ¿Qué no te garantiza sobre ese modelo?
 
-_(tu respuesta)_
+Coincide porque el paso carga el mismo pipeline entrenado que quedó guardado como artefacto y lo evalúa sobre el mismo `X_prueba`. No garantiza que el modelo sea estable con otra división, que generalice a datos futuros ni que siga siendo el mejor si cambia la distribución de los viajes.
 
 **Respuesta 3:** si mañana alguien cambia una fila de `viajes_features.csv` y vuelve a entrenar, ¿cómo lo notarías mirando solo el registro?
 
-_(tu respuesta)_
+La huella `huella_datos` sería distinta aunque se modificara un solo byte. Al comparar la nueva corrida con las anteriores vería que ya no se entrenó con la misma versión del CSV.
 
 **Si terminas antes:** abre la interfaz de MLflow (pestaña **Ports**, puerto 5050), entra al experimento `tarifa-taxis-comparacion`, selecciona las cinco corridas y compáralas lado a lado con **Compare**. Además del error, ¿qué te dice el registro de la red neuronal que no te diría una tabla escrita a mano?
 
-_(tu respuesta)_
+Además del error, MLflow muestra su capa de 64 neuronas, `max_iter=1000`, la semilla 42, el tiempo de entrenamiento, la huella de los datos, el número de filas y el artefacto del pipeline. Una tabla manual podría olvidar alguno de esos datos o no permitir cargar el modelo.
 
 ## Ejercicio 3: el registro de tu proyecto
 
@@ -119,11 +125,16 @@ La tabla de corridas de tu experimento, exportada con `mlflow.search_runs(...).t
 
 **¿Qué modelo elegiste como final? Escribe su `run_id` y los números del registro que sostienen la decisión.**
 
-_(tu respuesta)_
+En esta primera selección elegí la **red neuronal**. Su `run_id` es `cfe8821f136546399f2c313a53586424`: obtuvo MAE 5.4637 en entrenamiento y 4.9613 en prueba, usando 32.256 filas para entrenar y 8.064 para prueba. El bosque quedó segundo con 5.1231, una diferencia de 0.1617. El artefacto cargado reprodujo exactamente el MAE 4.9613453737.
+
+Los entregables quedaron junto al pipeline:
+
+- [`experimentos_proyecto.ipynb`](../semana-09-sesion-02/plantilla-pipeline/experimentos_proyecto.ipynb)
+- [`corridas_proyecto.csv`](../semana-09-sesion-02/plantilla-pipeline/corridas_proyecto.csv)
 
 **Si otra persona clona tu repositorio, ¿qué necesita para obtener exactamente el mismo número? ¿Qué de eso quedó registrado en MLflow y qué no?**
 
-_(tu respuesta)_
+Necesita el mismo CSV, el mismo código de preparación, la fecha de corte, los hiperparámetros, las semillas y versiones compatibles de las librerías. MLflow registró la huella `c0c505ad3ef8`, el corte `2026-08-25`, los parámetros, las métricas y el modelo entrenado. El repositorio sí contiene el CSV, el pipeline, el notebook y los requisitos, pero la carpeta local `.mlflow` no se sube; por eso, otra persona puede repetir el entrenamiento y verificar la métrica, aunque no obtiene el artefacto local de mi corrida solo con clonar Git.
 
 ## Antes de la próxima sesión
 
@@ -131,4 +142,4 @@ _(tu respuesta)_
 
 Hoy elegiste el modelo con menor error sobre los 595 viajes de prueba. ¿Cuánto cambiaría ese error si la división hubiera sido otra? ¿Lo viste en algún lado del registro?
 
-_(tu respuesta)_
+Sí cambió al probar más divisiones. Para la red neuronal, la validación al azar dio MAE promedio 5.6465 con desviación 0.1641, mientras la temporal dio 6.4700 con desviación 2.3505 y pliegues entre 4.9402 y 9.1765. Esa variación no aparecía en la corrida original: MLflow había registrado el resultado de una sola fecha de corte.
