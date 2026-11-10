@@ -180,8 +180,7 @@ El archivo [`.github/workflows/pruebas.yml`](../../.github/workflows/pruebas.yml
 
 **Pega el enlace a la ejecución de GitHub Actions donde pasan tus pruebas:**
 
-Pendiente de pegar el enlace exacto después de subir este trabajo al fork y
-comprobar que termine la ejecución.
+[Ejecución 42756634879: pruebas completadas correctamente](https://github.com/RazorJDCZ/data-science-end-to-end/actions/runs/42756634879).
 
 **¿Qué patrón elegiste para tu proyecto, y qué número de latencia lo decide?**
 
