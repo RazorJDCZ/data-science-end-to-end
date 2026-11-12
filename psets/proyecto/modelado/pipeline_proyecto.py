@@ -15,12 +15,18 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
-RUTA_PREDETERMINADA = (
-    Path(__file__).parents[3]
-    / "laboratorios"
-    / "data"
-    / "obt_emergencias_muestra_6_meses.csv"
-)
+RAIZ_PROYECTO = Path(__file__).resolve().parents[1]
+if RAIZ_PROYECTO.name == "proyecto":
+    # Estructura del repositorio: psets/proyecto/modelado/.
+    RUTA_PREDETERMINADA = (
+        RAIZ_PROYECTO.parents[1]
+        / "laboratorios"
+        / "data"
+        / "obt_emergencias_muestra_6_meses.csv"
+    )
+else:
+    # Dentro de la imagen el modulo queda en /app/modelado/.
+    RUTA_PREDETERMINADA = RAIZ_PROYECTO / "data" / "obt_emergencias_muestra_6_meses.csv"
 RUTA_DATOS = Path(os.environ.get("OBT_CSV", RUTA_PREDETERMINADA))
 
 OBJETIVO = "obj_n_emergencias_t3"
@@ -53,17 +59,36 @@ COLUMNAS_ARCHIVO = [
 ]
 
 
-def agregar_features(datos):
-    """Agrega las dos features que no vienen listas en el archivo."""
-    datos = datos.sort_values(["cod_canton", "fecha"]).copy()
-
-    # t-4 y t+3 caen en el mismo dia de la semana.
-    datos["lag_4d"] = datos.groupby("cod_canton")["n_emergencias"].shift(4)
+def agregar_calendario_t3(datos):
+    """Agrega si la fecha objetivo, tres dias despues, cae en fin de semana."""
+    datos = datos.copy()
+    if "dia_semana" not in datos:
+        datos["dia_semana"] = pd.to_datetime(datos["fecha"]).dt.dayofweek + 1
 
     # El calendario de t+3 ya se conoce al terminar el dia t.
     dia_semana_t3 = (datos["dia_semana"] + 2) % 7 + 1
     datos["es_fin_semana_t3"] = dia_semana_t3.isin([6, 7]).astype(int)
     return datos
+
+
+def agregar_features(datos):
+    """Agrega las dos features que no vienen listas en el archivo historico."""
+    datos = datos.sort_values(["cod_canton", "fecha"]).copy()
+
+    # t-4 y t+3 caen en el mismo dia de la semana.
+    datos["lag_4d"] = datos.groupby("cod_canton")["n_emergencias"].shift(4)
+    return agregar_calendario_t3(datos)
+
+
+def preparar_prediccion(datos):
+    """Prepara una fila nueva con los datos disponibles al terminar el dia.
+
+    El sistema que llama al servicio consulta el conteo de hace cuatro dias.
+    El nombre externo es explicito y aqui se convierte a la feature del modelo.
+    """
+    datos = datos.copy()
+    datos["lag_4d"] = datos.pop("n_emergencias_hace_4_dias")
+    return agregar_calendario_t3(datos)
 
 
 def cargar_y_dividir(ruta=RUTA_DATOS):
