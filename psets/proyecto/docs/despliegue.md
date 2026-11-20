@@ -35,3 +35,26 @@ el siguiente lote. Un servicio online sería más fresco, pero también necesita
 actualizar los agregados casi en tiempo real y mantener una API disponible. Para
 una decisión de planificación a tres días, ese costo extra no parece necesario
 por ahora.
+
+## Versionado y registro
+
+El modelo se registra en MLflow con el nombre `emergencias-ecu911`. Cada
+entrenamiento crea una version nueva y conserva su corrida, parametros, MAE y
+costo de subestimacion. En la prueba local quedaron registradas dos versiones:
+la version 1 uso 40 arboles y obtuvo MAE 5.2005; la version 2 uso 60 arboles y
+obtuvo MAE 5.1611. La version 2 tiene el alias `produccion` porque tambien
+mejoro el costo de subestimacion, de 7.9531 a 7.9017.
+
+El alias se mueve despues de revisar que el MAE temporal mejore y que no
+aumente el costo que da doble peso a las subestimaciones. Para volver a la
+version anterior ejecuto, desde `psets/proyecto`:
+
+```bash
+python -m servicio.promover 1
+python servicio/exportar_modelo.py
+```
+
+El segundo comando vuelve a generar `modelo.joblib`, `modelo_version.txt` y
+`modelo_run_id.txt`. Despues se reconstruye el contenedor. Los archivos de
+version y corrida permiten que la API responda que modelo sirve aunque el
+contenedor no tenga acceso al servidor de MLflow.

@@ -51,3 +51,4 @@ _to_delete/
 predicciones.jsonl
 cobros.csv
 modelo_version.txt
+modelo_run_id.txt

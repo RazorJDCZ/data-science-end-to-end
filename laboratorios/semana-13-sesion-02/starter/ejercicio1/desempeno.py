@@ -17,11 +17,19 @@ if not os.path.exists("predicciones.jsonl"):
 predicciones = pd.read_json("predicciones.jsonl", lines=True)
 cobros = pd.read_csv("cobros.csv")
 
-# TODO 4: une predicciones y cobros por id_prediccion (pd.merge), calcula el
+# Paso 4: une predicciones y cobros por id_prediccion (pd.merge), calcula el
 # error absoluto de cada viaje, agrega la columna "semana" con el lunes de
 # la semana del viaje (fecha_hora_inicio.dt.to_period("W").dt.start_time.dt.date),
 # y agrupa por semana: "viajes" (cuantos) y "mae" (el promedio del error).
-por_semana = pd.DataFrame(columns=["viajes", "mae"])
+datos = pd.merge(predicciones, cobros, on="id_prediccion", how="inner", validate="one_to_one")
+datos["fecha_hora_inicio"] = pd.to_datetime(datos["fecha_hora_inicio"])
+datos["error_absoluto"] = (datos["tarifa_estimada"] - datos["tarifa_cobrada"]).abs()
+datos["semana"] = datos["fecha_hora_inicio"].dt.to_period("W").dt.start_time.dt.date
+por_semana = datos.groupby("semana").agg(
+    viajes=("id_prediccion", "count"),
+    mae=("error_absoluto", "mean"),
+)
+por_semana["mae"] = por_semana["mae"].round(2)
 
 por_semana["veces_la_referencia"] = (por_semana["mae"] / MAE_REFERENCIA).round(2)
 print(por_semana.to_string())

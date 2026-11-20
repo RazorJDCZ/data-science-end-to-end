@@ -53,20 +53,26 @@ pytest psets/proyecto -v
 
 Después de la validación temporal elegí el **bosque aleatorio**, porque fue más
 estable que la red neuronal y tuvo menor costo al penalizar las emergencias
-subestimadas. La corrida exportada de MLflow es
-`e60512928d4f4d93afec8350fe9f1fc3`; en la partición registrada obtuvo MAE de
-prueba 5.1231. La decisión de servirlo por lotes está explicada en
+subestimadas. En el registro de MLflow se llama `emergencias-ecu911`. La
+version 2, con 60 arboles, tiene el alias `produccion`; obtuvo MAE 5.1611 y
+costo de subestimacion 7.9017. La decision de servirlo por lotes y el criterio
+de versionado estan explicados en
 [`docs/despliegue.md`](docs/despliegue.md).
 
 ## Cómo correr el servicio
 
-Primero se levanta MLflow y, desde `psets/proyecto`, se exporta el artefacto de
-la corrida elegida. El archivo `modelo.joblib` se genera localmente y no se
-sube al repositorio:
+Primero se levanta MLflow. Desde `psets/proyecto` se pueden registrar dos
+versiones, promover la mejor y exportar el alias de produccion:
 
 ```bash
+python -m servicio.registrar_modelo 40
+python -m servicio.registrar_modelo 60
+python -m servicio.promover 2
 python servicio/exportar_modelo.py
 ```
+
+La exportacion genera localmente `modelo.joblib`, `modelo_version.txt` y
+`modelo_run_id.txt`; no se suben al repositorio.
 
 El servicio se puede probar directamente:
 
@@ -94,9 +100,24 @@ Respuesta observada:
 
 ```json
 {
+  "id_prediccion": "<identificador generado>",
   "cod_canton": "0101",
   "fecha_objetivo": "2026-09-06",
-  "emergencias_estimadas": 19.61,
-  "run_id": "e60512928d4f4d93afec8350fe9f1fc3"
+  "emergencias_estimadas": 20.28,
+  "run_id": "4aa7d7dab1af451bb26c972663f6a7bf",
+  "version_modelo": "2"
 }
 ```
+
+## Como revisar el monitoreo
+
+La API cuenta peticiones, errores y latencias en `/metricas`. Tambien guarda
+cada prediccion en `monitoreo/predicciones.jsonl`. Cuando ya existe el conteo
+real para la fecha objetivo, el MAE semanal por version se calcula con:
+
+```bash
+python monitoreo/desempeno.py
+```
+
+Las metricas, sus fuentes y umbrales estan documentados en
+[`docs/monitoreo.md`](docs/monitoreo.md).

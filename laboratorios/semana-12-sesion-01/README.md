@@ -1,4 +1,6 @@
-# Semana 12, Sesión 1: Patrones de despliegue: ¿batch u online?
+# Juan Diego Cadena, 329220
+
+## Semana 12, Sesión 1: Patrones de despliegue: ¿batch u online?
 
 > Objetivo de la sesión: elegir entre servir el modelo de tu proyecto en modalidad batch o en modalidad online, justificando la decisión según la latencia que exige el caso de uso propuesto, y proteger con pruebas automáticas, que corren en cada cambio, el código que lo sirve.
 

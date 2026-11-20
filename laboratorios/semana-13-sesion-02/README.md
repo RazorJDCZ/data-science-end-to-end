@@ -1,4 +1,6 @@
-# Semana 13, Sesión 2: Monitoreo en producción I: métricas de rendimiento
+# Juan Diego Cadena, 329220
+
+## Semana 13, Sesión 2: Monitoreo en producción I: métricas de rendimiento
 
 > Objetivo de la sesión: definir las métricas de monitoreo del modelo de tu proyecto en producción, distinguiendo métricas de sistema (latencia, disponibilidad) de métricas de modelo (desempeño).
 
@@ -16,17 +18,26 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿por qué no alcanza con vigilar la salud y el volumen de peticiones del servicio? ¿Qué hay que medir además?**
 
-_(tu respuesta)_
+La salud y el volumen solo dicen si el servicio responde y recibe trafico. Un
+modelo puede responder rapido y aun asi equivocarse cada vez mas. Tambien hay
+que medir latencia y errores del sistema, calidad de entradas y salidas, y la
+metrica de desempeno del modelo cuando llega la verdad.
 
 **El artículo dice que la verdad (ground truth) a veces llega con demora, o no llega. ¿Qué propone medir mientras tanto?**
 
-_(tu respuesta)_
+Mientras llega la verdad se pueden vigilar senales indirectas: distribucion de
+features y predicciones, valores faltantes, categorias nuevas, proporcion de
+alertas y cambios frente a una referencia. Sirven para investigar temprano,
+pero no reemplazan una metrica con etiquetas reales.
 
 ## Pregunta de apertura
 
 Tu servicio responde en unos milisegundos, `/salud` dice que todo está bien, y cada tarifa dice qué versión la calculó. ¿Qué le pasa a un modelo que responde rápido pero cada vez peor? ¿Cómo te enterarías?
 
-_(tu respuesta)_
+Puede estar sufriendo degradacion o concept drift aunque tecnicamente siga
+sano. Guardaria cada prediccion con su version e identificador, y cuando se
+conozca la tarifa real calcularia el MAE por semana. Tambien observaria cambios
+en entradas y predicciones mientras la verdad no este disponible.
 
 ## Ejercicio 1: la tarifa, instrumentada
 
@@ -43,37 +54,61 @@ pytest -v
 
 **Respuesta 1 (antes de los TODO):** los 1156 viajes recibieron su tarifa. ¿Qué dicen `/metricas` y `desempeno.py`? ¿Qué podrías afirmar sobre el servicio en noviembre?
 
-_(tu respuesta)_
+Antes de resolver, `/metricas` devolvia un diccionario vacio y
+`desempeno.py` imprimia una tabla sin semanas. Solo podia afirmar que las 1156
+peticiones obtuvieron una respuesta; no podia saber la latencia, los errores
+ni si las tarifas fueron buenas.
 
 **Respuesta 2 (TODO 1 y 2):** antes de correr la simulación, ¿qué latencia p95 esperas, y cuántos errores de validación? ¿Esperas que la latencia cambie entre la primera y la última semana del mes?
 
-_(tu respuesta)_
+Esperaba una p95 baja, de pocos milisegundos y menor a 50 ms, y exactamente
+tres errores 422 por las peticiones incompletas de la simulacion. No esperaba
+un cambio importante entre semanas porque se usa el mismo modelo y el volumen
+por peticion es el mismo; una subida sostenida sugeriria un problema del
+servicio o de la maquina.
 
 **Respuesta 3 (TODO 3):** el servicio devuelve `id_prediccion` y lo guarda en el registro. ¿Para qué lo necesita el sistema de cobros? ¿Qué pasaría si solo se guardaran la fecha y la tarifa estimada?
 
-_(tu respuesta)_
+El sistema de cobros necesita el identificador para unir cada cobro con la
+prediccion exacta que lo origino. Solo con fecha y tarifa estimada podria haber
+varios viajes iguales o del mismo instante, y la union seria ambigua o
+duplicaria registros.
 
 **Respuesta 4 (TODO 4):** el MAE en prueba de la versión 1 fue 1.17. Antes de correr `desempeno.py`, ¿qué esperas para cada semana de noviembre?
 
-_(tu respuesta)_
+Esperaba un MAE cercano a 1.17 en cada semana, con pequenas variaciones por la
+muestra. Un valor varias veces mayor indicaria que el comportamiento de
+produccion cambio frente a la prueba.
 
 **Lo que mostró el monitoreo:**
 
-_(anota la latencia p95, los errores de validación y de servidor, y el MAE de cada semana)_
+La simulacion registro **1159 peticiones**, p95 de **9.45 ms**, **3 errores de
+validacion** y **0 errores de servidor**. El MAE semanal fue:
+
+| Semana | Viajes | MAE | Veces la referencia |
+|---|---:|---:|---:|
+| 2026-11-02 | 291 | 1.18 | 1.01 |
+| 2026-11-09 | 318 | 1.34 | 1.15 |
+| 2026-11-16 | 308 | 4.29 | 3.67 |
+| 2026-11-23 | 239 | 4.30 | 3.68 |
 
 ## Durante el ConcepTest
 
 **Tu voto, antes de discutir en pareja** (A, B, C o D):
 
-_(tu voto)_
+No aplica todavia: el repositorio no incluye el enunciado ni las opciones del
+ConcepTest.
 
 **Tu razonamiento:**
 
-_(tu respuesta)_
+No escogi una letra sin ver la pregunta. Separaria primero si la senal describe
+el sistema, los datos o el desempeno del modelo, y si necesita ground truth.
 
 **Después de discutir en pareja, ¿cambiaste de voto? ¿Por qué?**
 
-_(tu respuesta)_
+Queda pendiente la discusion presencial. Cambiaria mi voto si la otra persona
+demuestra que la metrica se conoce en un momento distinto o mide otro tipo de
+falla.
 
 ## Ejercicio 2: el fraude, cuando la verdad tarda tres semanas
 
@@ -81,19 +116,31 @@ Solo o en pareja. Carpeta: [`starter/ejercicio2/`](./starter/ejercicio2/). El se
 
 **Respuesta 1:** el reporte da tres tipos de alerta. ¿Cuáles son de sistema y cuáles de modelo? ¿El día de la latencia alta coincide con alguna semana de recall bajo?
 
-_(tu respuesta)_
+La alerta de latencia del 10 de noviembre es de sistema. Las tasas de alertas
+bajas son senales indirectas del modelo y el recall bajo es una alerta directa
+de desempeno. La latencia alta cae en la semana del 9, cuyo recall fue 0.736;
+no coincide con la caida de recall de la semana del 16.
 
 **Respuesta 2:** la tasa de alertas se puede calcular el mismo día; el recall, tres semanas después. ¿Qué semana mostró primero el problema la tasa de alertas, y cuándo lo confirmó el recall? ¿Por qué la tasa de alertas no alcanza para decir que el modelo empeoró?
 
-_(tu respuesta)_
+La tasa de alertas mostro primero el problema en la semana del **16 de
+noviembre**, al bajar a 0.0503. El recall de esa semana, 0.276, se pudo confirmar
+cuando termino su ventana de 21 dias, el **13 de diciembre**. La tasa no basta
+porque tambien puede cambiar si llegan pagos menos riesgosos, cambia el volumen
+o se modifica la politica, aunque el modelo conserve su calidad.
 
 **Respuesta 3:** ¿por qué el reporte no muestra el recall de la semana del 23 de noviembre, si ya hay fraudes confirmados de esa semana?
 
-_(tu respuesta)_
+Porque esa semana todavia no es madura. Termina el domingo 29 de noviembre y
+los fraudes pueden tardar 21 dias en confirmarse, hasta el 20 de diciembre. Si
+se calculara antes, algunos fraudes aun no reportados se contarian como
+negativos y el recall seria enganoso.
 
 **Si terminas antes:** cambia `HOY` a `"2026-11-30"` y vuelve a correr. ¿Qué semanas tienen recall? ¿Desde qué día el reporte puede mostrar la caída del recall de la semana del 16?
 
-_(tu respuesta)_
+Con `HOY = "2026-11-30"` solo tiene recall la semana del 2 de noviembre. La
+caida de la semana del 16 puede mostrarse desde el 13 de diciembre: domingo 22
+mas los 21 dias de demora maxima.
 
 ## Ejercicio 3: el monitoreo de tu proyecto
 
@@ -115,11 +162,16 @@ Una tabla con cada métrica que vigilas: si es de sistema o de modelo, de dónde
 
 **¿Cuánto tarda en llegar la verdad en tu proyecto, y qué métrica te avisa mientras tanto?**
 
-_(tu respuesta)_
+La verdad llega al cerrar la fecha objetivo, tres dias despues de los datos de
+entrada. Mientras tanto vigilo el volumen por canton y el promedio de las
+predicciones frente a las cuatro semanas anteriores. Esas senales avisan de un
+cambio, pero el MAE posterior es el que confirma si el modelo se equivoco.
 
 **¿Qué falla de tu modelo no vería ninguna de tus métricas de sistema?**
 
-_(tu respuesta)_
+No verian una degradacion del MAE o un cambio en la relacion entre las features
+y las emergencias reales. La API podria responder 200, sin errores y con buena
+latencia mientras subestima sistematicamente la demanda.
 
 ## Antes de la próxima sesión
 
@@ -127,4 +179,7 @@ _(tu respuesta)_
 
 Desde el 16 de noviembre, el modelo de la tarifa se equivoca casi cuatro veces más que en prueba. Los viajes que recibe el servicio son del mismo tipo que los de octubre: las mismas zonas, las mismas distancias, las mismas horas. ¿Qué cambió, entonces? ¿Lo hubieras detectado mirando solo los viajes que llegan?
 
-_(tu respuesta)_
+Cambio la relacion entre los mismos tipos de viaje y la tarifa real: es un
+posible concept drift. No necesariamente cambio la distribucion de zonas,
+distancias u horas, por eso mirar solo las entradas no lo detectaria. Hacia
+falta unir las predicciones con los cobros y medir el error.
